@@ -1,0 +1,452 @@
+\PassOptionsToPackage{usenames}{color}
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage{relsize} % relative font sizes (e.g. \smaller). must precede ACL style
+%\usepackage{style/acl2012}
+\usepackage[linkcolor=blue]{hyperref}
+\usepackage{natbib}
+
+%\usepackage{times}
+%\usepackage{latexsym}
+
+
+\usepackage[boxed]{algorithm2e}
+\renewcommand\AlCapFnt{\small}
+\usepackage[small,bf,skip=5pt]{caption}
+\usepackage{sidecap} % side captions
+\usepackage{rotating}	% sideways
+
+% Italicize subparagraph headings
+\usepackage{titlesec}
+\titleformat*{\subparagraph}{\itshape}
+\titlespacing{\subparagraph}{%
+  1em}{%              left margin
+  0pt}{% space before (vertical)
+  1em}%               space after (horizontal)
+
+% Numbered Examples and lists
+\usepackage{lingmacros}
+
+\usepackage{enumitem} % customizable lists
+\setitemize{noitemsep,topsep=0em,leftmargin=*}
+\setenumerate{noitemsep,leftmargin=0em,itemindent=13pt,topsep=0em}
+
+
+\usepackage{textcomp}
+% \usepackage{arabtex} % must go after xparse, if xparse is used!
+%\usepackage{utf8}
+% \setcode{utf8} % use UTF-8 Arabic
+% \newcommand{\Ar}[1]{\RL{\novocalize #1}} % Arabic text
+
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\itshape,
+  xleftmargin=3em,
+  aboveskip=0pt,
+  belowskip=-3pt, %-.5\baselineskip, % correct for extra paragraph break inserted after listing
+  literate={->}{$\rightarrow$}{2}
+           {α}{$\alpha$}{1}
+           {δ}{$\delta$}{1}
+           {(}{$($}{1}
+           {)}{$)$}{1}
+           {[}{$[$}{1}
+           {]}{$]$}{1}
+           {|}{$|$}{1}
+           {+}{\ensuremath{^+}}{1}
+           {*}{\ensuremath{^*}}{1}
+}
+
+\usepackage{amssymb}	%amsfonts,eucal,amsbsy,amsthm,amsopn
+\usepackage{amsmath}
+
+%\usepackage{mathptmx}	% txfonts
+\usepackage{fourier}
+\usepackage[scaled]{beramono}
+\usepackage[T1]{fontenc}
+\usepackage[utf8x]{inputenc}
+
+\usepackage{MnSymbol}	% must be after mathptmx
+
+\usepackage{latexsym}
+
+
+
+
+
+% Tables
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{booktabs} % pretty tables
+\usepackage{multicol}
+\usepackage{footnote}
+
+
+\usepackage{url}
+\usepackage[usenames]{color}
+\usepackage{xcolor}
+
+% colored frame box
+\newcommand{\cfbox}[2]{%
+    \colorlet{currentcolor}{.}%
+    {\color{#1}%
+    \fbox{\color{currentcolor}#2}}%
+}
+
+\usepackage[normalem]{ulem} % \uline
+\usepackage{colortbl}
+\usepackage{graphicx}
+\usepackage{subcaption}
+%\usepackage{tikz-dependency}
+\usepackage{tikz}
+%\usepackage{tree-dvips}
+\usetikzlibrary{arrows,positioning,calc} 
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+
+
+% Author comments
+\usepackage{color}
+\newcommand\bmmax{0} % magic to avoid 'too many math alphabets' error
+\usepackage{bm}
+\definecolor{orange}{rgb}{1,0.5,0}
+\definecolor{mdgreen}{rgb}{0,0.6,0}
+\definecolor{mdblue}{rgb}{0,0,0.7}
+\definecolor{dkblue}{rgb}{0,0,0.5}
+\definecolor{dkgray}{rgb}{0.3,0.3,0.3}
+\definecolor{slate}{rgb}{0.25,0.25,0.4}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{ltgray}{rgb}{0.7,0.7,0.7}
+\definecolor{purple}{rgb}{0.7,0,1.0}
+\definecolor{lavender}{rgb}{0.65,0.55,1.0}
+
+% Settings for algorithm listings
+% \lstset{
+%   language=Python,
+%   upquote=true,
+%   showstringspaces=false,
+%   formfeed=\newpage,
+%   tabsize=1,
+%   commentstyle=\itshape\color{lavender},
+%   basicstyle=\small\smaller\ttfamily,
+%   morekeywords={lambda},
+%   emph={upward,downward,tc},
+%   emphstyle=\underbar,
+%   aboveskip=0cm,
+%   belowskip=-.5cm
+% }
+%\renewcommand{\lstlistingname}{Algorithm}
+
+
+\newcommand{\ensuretext}[1]{#1}
+\newcommand{\cjdmarker}{\ensuretext{\textcolor{green}{\ensuremath{^{\textsc{CJ}}_{\textsc{D}}}}}}
+\newcommand{\nssmarker}{\ensuretext{\textcolor{magenta}{\ensuremath{^{\textsc{NS}}_{\textsc{S}}}}}}
+\newcommand{\nasmarker}{\ensuretext{\textcolor{red}{\ensuremath{^{\textsc{NA}}_{\textsc{S}}}}}}
+\newcommand{\bomarker}{\ensuretext{\textcolor{blue}{\ensuremath{^{\textsc{B}}_{\textsc{O}}}}}}
+\newcommand{\jbmarker}{\ensuretext{\textcolor{orange}{\ensuremath{^{\textsc{J}}_{\textsc{B}}}}}}
+\newcommand{\dbmarker}{\ensuretext{\textcolor{purple}{\ensuremath{^{\textsc{D}}_{\textsc{B}}}}}}
+\newcommand{\arkcomment}[3]{\ensuretext{\textcolor{#3}{[#1 #2]}}}
+%\newcommand{\arkcomment}[3]{}
+\newcommand{\cjd}[1]{\arkcomment{\cjdmarker}{#1}{green}}
+\newcommand{\nss}[1]{\arkcomment{\nssmarker}{#1}{magenta}}
+\newcommand{\nas}[1]{\arkcomment{\nasmarker}{#1}{red}}
+\newcommand{\bo}[1]{\arkcomment{\bomarker}{#1}{blue}}
+\newcommand{\jb}[1]{\arkcomment{\jbmarker}{#1}{orange}}
+\newcommand{\db}[1]{\arkcomment{\dbmarker}{#1}{purple}}
+\newcommand{\params}{\mathbf{\theta}}
+\newcommand{\wts}{\mathbf{w}}
+\newcommand{\g}{\mathbf{g}}
+\newcommand{\f}{\mathbf{f}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu} % \bar is too narrow in math
+\newcommand{\cost}{c}
+
+\newcommand{\Sref}[1]{\S\ref{#1}}
+\newcommand{\fref}[1]{figure~\ref{#1}}
+\newcommand{\ffref}[2]{figures~\ref{#1} and~\ref{#2}}
+\newcommand{\Fref}[1]{Figure~\ref{#1}}
+\newcommand{\FFref}[2]{Figures~\ref{#1} and~\ref{#2}}
+\newcommand{\tref}[1]{table~\ref{#1}}
+\newcommand{\ttref}[2]{tables~\ref{#1} and~\ref{#2}}
+\newcommand{\Tref}[1]{Table~\ref{#1}}
+\newcommand{\aref}[1]{algorithm~\ref{#1}}
+\newcommand{\Aref}[1]{Algorithm~\ref{#1}}
+\newcommand{\fnref}[1]{footnote~\ref{#1}}
+\newcommand{\eref}[1]{\eqref{#1}}
+
+% Space savers
+% From http://www.eng.cam.ac.uk/help/tpl/textprocessing/squeeze.html
+%\addtolength{\dbltextfloatsep}{-.5cm} % space between last top float or first bottom float and the text.
+%\addtolength{\intextsep}{-.5cm} % space left on top and bottom of an in-text float.
+%\addtolength{\abovedisplayskip}{-.5cm} % space before maths
+%\addtolength{\belowdisplayskip}{-.5cm} % space after maths
+%\addtolength{\topsep}{-.5cm} %space between first item and preceding paragraph
+%\setlength{\belowcaptionskip}{-.25cm}
+
+
+% customize \paragraph spacing
+\makeatletter
+\renewcommand{\paragraph}{%
+  \@startsection{paragraph}{4}%
+  {\z@}{.2ex \@plus 1ex \@minus .2ex}{-1em}%
+  {\normalfont\normalsize\bfseries}%
+}
+\makeatother
+
+
+
+% Special macros
+\newcommand{\tg}[1]{\texttt{#1}}	% supersense tag name
+\newcommand{\lex}[1]{\textsmaller{\textsf{\textcolor{slate}{\textbf{#1}}}}}	% example lexical item 
+\newcommand{\glosst}[2]{\ensuremath{\underset{\textrm{#2}}{\textrm{#1}}}} % gloss text (a word or phrase) (second arg is the gloss)
+\newcommand{\sys}[1]{\mbox{\textbf{#1}}}   % name of a system (one of our experimental conditions)
+\newcommand{\dataset}[1]{\mbox{\textsc{#1}}}	% one of the datasets in our experiments
+\newcommand{\datasplit}[1]{\mbox{\textbf{#1}}}	% portion one of the datasets in our experiments
+
+\newcommand{\w}[1]{\textit{#1}}	% word
+\newcommand{\tat}[0]{\textasciitilde}
+
+\newcommand{\shortlong}[2]{#1} % short vs. long version of the paper
+\newcommand{\confversion}[1]{#1}
+\newcommand{\srsversion}[1]{}
+%\newcommand{\finalversion}[1]{#1}
+\newcommand{\finalversion}[1]{}
+\newcommand{\shortversion}[1]{#1}
+\newcommand{\considercutting}[1]{#1}
+\newcommand{\longversion}[1]{} % ...if only there were more space...
+\newcommand{\subversion}[1]{#1} % for the submission version only
+\newcommand{\draftnotice}[1]{#1} % for the draft version only
+%\newcommand{\subversion}[1]{}
+
+\hyphenation{WordNet}
+\hyphenation{WordNets}
+\hyphenation{VerbNet}
+\hyphenation{FrameNet}
+\hyphenation{SemCor}
+\hyphenation{PennConverter}
+\hyphenation{an-aly-sis}
+\hyphenation{an-aly-ses}
+\hyphenation{news-text}
+\hyphenation{base-line}
+\hyphenation{de-ve-lop-ed}
+\hyphenation{comb-over}
+
+\title{\draftnotice{{\it\small WORKING DRAFT}\\[5pt] }Features in Models of Language}
+
+\author{Nathan Schneider}
+
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+\noindent Feature-rich models are ubiquitous in NLP. 
+This note discusses concepts, terminology, algorithms, and implementation details pertaining to features in discrete statistical models.
+\end{abstract}
+
+\section{Preliminaries}
+
+We will consider feature-based models such as logistic regression 
+that have discrete categorical outputs (classes, responses), which we will call {\bf labels}. 
+The set of possible labels, denoted $\mathcal{Y}$, is assumed to be known and the same for all inputs.\footnote{In some cases, which we do not consider here, the space of possible outputs may depend on the input, so it is $\mathcal{Y}(x)$. 
+For example, in structured problems like tagging and parsing, the space of possible predictions depends on the length of the input.}
+Without loss of generality, we arbitrarily index the labels: $\mathcal{Y}=\{\mathrm{Y}^1,\mathrm{Y}^2,\ldots,\mathrm{Y}^{Y}\}$.
+
+Given an input $x \in \mathcal{X}$, our decoding objective is 
+to choose the label $y \in \mathcal{Y}$ that best fits the input. 
+The function that does this is called a classifier: $h: \mathcal{X}\rightarrow\mathcal{Y}$.
+We often operationalize $h(x)$ as maximizing a real-valued scoring function, $g_\params: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}$, 
+where $\params$ represents the model parameters: 
+
+\begin{equation}\label{eq:classifier}
+\hat{y} = h(x) = \arg\max_{y\in\mathcal{Y}} g_\params(x,y)
+\end{equation}
+
+In NLP, $x$ is typically a linguistic unit---such as a word or document---with no inherent mathematical structure. 
+A {\bf feature function} identifies characteristics of the input that are relevant to the mathematical model, 
+and links them to the possible labels. 
+For example, if $x$ is a document, then we may want to encode it as a bag of words 
+in order to model similarity between documents as the number of words shared in common.
+
+Our feature function, $\mathbf{f}$, is a vector-valued mapping between 
+characteristics of the input and characteristics of the output.
+We assume that $\mathbf{f}$ returns $d$ components---$\mathbf{f}: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}^d$.\footnote{The parameters in a model are sometimes called its {\bf weights}, 
+though we reserve the term ``weight'' for the actual value of a parameter.}
+
+The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}$ weighted by corresponding parameters.
+The (real) parameters weight the features to establish the goodness-of-fit between pairs of input-output characteristics.  
+Here is a {\bf linear} scoring function, 
+given parameters $\boldsymbol{\theta}\in\mathbb{R}^d$ such that $\theta_j$ is associated with the $j$th component of the feature vector:
+\begin{equation}\label{eq:linear}
+g_{\boldsymbol{\theta}}(x,y) = \sum_{j=1}^d \theta_j f_j(x,y)
+= \boldsymbol{\theta}^{\top} \mathbf{f}(x,y)
+\end{equation}
+And here is a {\bf log-linear} or {\bf softmax} scoring function:\footnote{The denominator (sum over all labels) is called the {\bf partition function}, sometimes denoted $Z_{\boldsymbol{\theta}}(x)$. It normalizes the scores to be a probability distribution (nonnegative and summing to 1).}
+\begin{equation}\label{eq:softmax}
+g_{\boldsymbol{\theta}}(x,y) = \log\frac{\exp{\sum_{j=1}^d \theta_j f_j(x,y)}}{\sum_{y'\in\mathcal{Y}}\exp{\sum_{j=1}^d \theta_j f_j(x,y')}}
+= \boldsymbol{\theta}^{\top} \mathbf{f}(x,y) - \log{\sum_{y'\in\mathcal{Y}}\exp{\boldsymbol{\theta}^{\top} \mathbf{f}(x,y')}}
+\end{equation}
+
+Most commonly, the multiclass feature function looks like this:\nss{I am going for vector concatenation; there may be a better notation for this}
+\begin{equation}\label{eq:crossprod}
+\mathbf{f}(x,y=\mathrm{Y}^k) = \mathbf{0}_{c(k-1)};\  \boldsymbol{\phi}(x);\  \mathbf{0}_{c(Y-k)}
+\end{equation}
+where $\boldsymbol{\phi}: \mathcal{X}\rightarrow\mathbb{R}^c$ describes every input with $c$ real-valued\footnote{For discrete data, these are often binary, though the models we describe here do not depend on that. A document could be featurized with relative frequencies of its words, for example.} 
+characteristics (the values of these characteristics are the same no matter what label is considered), 
+and $d = |\boldsymbol{\theta}| = c \times Y$---there is one parameter for every pairing of an input characteristic with a label.\footnote{We assume 
+\nss{for now?} that there is only one characteristic of each {\em output}, the identity of the label.}
+In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x)$ for all $k\in\{1,2,\ldots,Y\}$.
+We will refer to $\boldsymbol{\phi}(x)$ as the {\bf percept}\footnote{This is a nonstandard term; we are introducing 
+it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''; 
+may also be called a ``base feature''\nss{is this standard or just Brendan?}) and other times to the variable associated with a parameter, 
+which depends on both the input and the output.} function (a percept being a characteristic of the input),
+and this parametrization of the feature function $\mathbf{f}$ as the {\bf cross-product}\footnote{\nss{I am not aware of any standard term for this}} 
+parametrization, as there is one parameter for every pair of input-output characteristics.
+
+For example: Suppose that our input $x$ is a document, and the label space $\mathcal{Y}$ consists of genre categories ({\sc article}, {\sc transcript}, {\sc recipe}, etc.).
+In our terminology, one {\em percept} might be ``contains the word \textit{pie}''; the corresponding {\em features} 
+would be ``{\sc article} contains the word \textit{pie}'', ``{\sc transcript} contains the word \textit{pie}'', ``{\sc recipe} contains the word \textit{pie}'', 
+and so forth. When the {\sc article} label is being scored, only the features for the {\sc article} label have a nonzero value, 
+and likewise for the other categories. With just these features, the model (assuming good parameters) will score 
+a document with the word \textit{pie} as best matching the {\sc recipe} label, because the 
+``{\sc recipe} contains the word \textit{pie}'' will have a higher weight than the other \textit{pie} features.
+The model might include other percepts---other words, bigrams (``contains the bigram \textit{apple pie}''), 
+metadata (``author = Martha Stewart''), or any other characteristics of the document deemed relevant to the task.
+The cross-product parametrization implies that a feature is instantiated for every percept paired with every label.
+
+
+Now we can define {\bf multinomial (or multiclass) logistic regression} model 
+as a model over a fixed set of categorical outputs with the log-linear scoring function and the cross-product parametrization.
+To simplify notation, we will let $\boldsymbol{\theta}^y$ denote the one of the $Y$ sections of $\boldsymbol{\theta}$ 
+corresponding to the label $y$. 
+%so $\left(\mathbf{g}_{\boldsymbol{\theta}}(x,y)\right)_j = \boldsymbol{\theta}^y_j \phi_j(x) = \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x)$.
+Then, combining equations \eref{eq:classifier}, \eref{eq:softmax}, and \eref{eq:crossprod}, 
+the classification rule is
+\begin{equation}\label{eq:logistic}
+\hat{y} = \max_{y\in\mathcal{Y}} g_\params(x,y) = \max_{y\in\mathcal{Y}} \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x) - \log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^{y'\top} \boldsymbol{\phi}(x)}}}
+\end{equation} 
+A {\bf log-linear}, or {\bf max(imum) ent(ropy)}, model is more general---it implies the log-linear scoring function 
+but does not depend on the space of outputs being fixed or require the cross-product parametrization.
+
+\nss{is it necessary to discuss generative/discriminative/joint/conditional?}
+\\
+
+\noindent To summarize: in our terminology,
+\begin{itemize}
+  \item {\bf Labels} are the classes/outputs/responses. In classification, one label $y$ is predicted for each input $x$; 
+  we assume the set of possible labels is fixed in advance.
+  \item A {\bf percept} is a characteristic of the input. The percept function $\boldsymbol{\phi}(x)$ maps an input to a vector of percepts.
+  It is typically designed manually with knowledge of the task/domain.
+  \item A {\bf feature} is a real-valued variable linking a percept to a label. The feature function $\mathbf{f}(x,y)$ maps an input and a label to a vector of features.
+  \item A {\bf parameter} is a real-valued variable in one-to-one correspondence with a feature. Parameters $\boldsymbol{\theta}$ are typically learned from data.
+  \item The {\bf parametrization} of a model is the correspondence between percepts and features/parameters. 
+  Most commonly (and always in logistic regression), the {\bf cross-product} parametrization is used, in which every percept is linked to each label, one label per feature.
+  \item The {\bf scoring function} $g_{\boldsymbol{\theta}}(x,y)$ assigns a real score to a given input and label. 
+  The simplest is {\bf linear} (the dot product of the parameter vector with the feature vector).
+  The {\bf log-linear} scoring function is useful for probabilistic models, and subsumes logistic regression.
+  In classification, the highest-scoring label for the input wins. 
+\end{itemize}
+
+\section{Parametrization}
+
+\subsection{Bias features}\label{sec:bias}
+
+Because the overall frequency of the labels in data may not be uniform, 
+it is customary to account for this base frequency with a {\bf bias feature} 
+for each label. The bias feature fires (i.e., has value 1) whenever 
+the label is being scored; the weight that is learned will be indicative of 
+the label's frequency.\footnote{This is equivalent to an intercept term in the scoring function.} 
+Under the cross-product parametrization, this amounts to a percept that is 1 for all inputs.
+Bias parameters are sometimes exempted from regularization (see \Sref{sec:reg}).
+
+\subsection{Background labels and degrees of freedom}\label{sec:bg}
+
+Imagine a linear binary classifier whose only percept is a real value. 
+This classifier can be represented with only one feature/parameter, a threshold\footnote{In higher dimensions, the geometric boundary between classes is called a {\bf separating hyperplane}.}
+below which the input is assigned to one class and above which it is assigned to the other.
+One {\em could} model this decision with two features/parameters, one that fires when scoring the positive class 
+and one that fires for the negative class---but this is redundant because the negative-class feature value
+is a function of the positive-class feature value (they are mutually exclusive).
+The model is thus said to have one {\bf degree of freedom}.\footnote{\nss{how does this relate to {\bf overparametrization} and {\bf identifiability}?}}
+More generally, with $Y$ mutually exclusive labels and percept functions in $\mathbb{R}^c$, a (log-)linear classifier 
+never requires more than $(Y-1) \times c$ features. 
+Implicitly, one of the labels---call this the {\bf background label}---always receives a score of 0, 
+and the non-background labels are scored relative to 0 (a positive score for an input means it outranks the background label; 
+a negative score means it is a worse fit). Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the classifier can then be rewritten as
+
+\begin{equation}\label{eq:classifier-bg}
+\hat{y} = h(x) = \arg\max_{y\in\mathcal{Y}} \left\{\begin{array}{cl}
+0 & \text{if }y=\mathrm{Y}^{\textsc{bg}} \\
+g_\params(x,y) & \text{o.w.}\end{array}\right\}
+\end{equation}
+
+In practice, keeping parameters for all $Y$ labels (not using a background label) 
+should not affect predictive performance, and may make the model more interpretable (\Sref{sec:interp}).
+But using a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
+
+\subsection{Categorical characteristics}
+
+Models for discrete data commonly represent categorical characteristics of the input.
+A binary characteristic is handled with a binary-valued percept; it is redundant to have 
+nonzero parameters for both the ``false'' and ``true'' states, as these would be guaranteed 
+to have opposite values if learned from data (because when one fires the other is silent, and vice versa).
+In general, a characteristic with a closed set of $k$ possible categorical and mutually exclusive values 
+is encoded nonredundantly with $k-1$ binary percepts.\footnote{A percept taking two or more nonzero values has a scalar 
+interpretation under scoring functions such as \eref{eq:linear} and \eref{eq:softmax}. 
+Hence the use of multiple binary percepts for categorical characteristics.}
+Mathematically, there is no harm in representing all $k$ categories, 
+and depending on the semantics of the characteristic, it might make the model more interpretable.
+But when a characteristic has an obvious {\bf default} category (such as ``not applicable''),
+it can safely be left out of the percept vector---much like features for a background label 
+can be left out of the feature vector (\Sref{sec:bg})---with slight computational savings.
+
+\subsection{Scalar characteristics}
+
+\nss{binning and thresholding}
+
+
+
+
+\nss{feature template (``featureme''); conjunctions/disjunctions}
+
+\nss{tying/sharing}
+
+
+\nss{local vs.~nonlocal in structured models}
+
+\nss{softmax trick?}
+
+\section{Feature extraction}
+
+\nss{implementation issues: store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
+feature hashing; etc.}
+
+
+\section{Learning}\label{sec:learning}
+
+\nss{estimation: objective, optimization---practical issues (e.g., fast score computation, sparse updates/averaging)}
+% (kinds of optimization: online vs. (mini)batch; gradient-based; margin-based vs. probabilistic; curriculum; joint/constrained/dual decomp)
+
+\nss{unsupported features/count thresholds; OOV handling}
+
+\nss{feature induction}
+
+\subsection{Regularization}\label{sec:reg}
+
+\nss{regularization: simple approaches, sparsity, groups, graph-based, priors}
+
+\nss{pointers to un/semi-supervised approaches}
+% - semi-supervised learning/domain adaptation: posterior regularization; active learning; transfer learning
+% - unsupervised learning: generative better?; Berg-Kirkpatrick
+
+\section{Interpretation}\label{sec:interp}
+
+\nss{caveats about interpretability}
+
+\nss{impact measure}
+
+
+\end{document}
