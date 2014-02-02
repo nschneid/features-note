@@ -452,16 +452,19 @@ The percept template can be expressed with a variable: ``word $w$ appears in the
 the template instantiates one percept for every word in some vocabulary 
 (typically, the vocabulary of the training data; see \Sref{sec:extraction}). 
 Complex templates contain multiple variables: we can generalize the first conjunction example given in the previous section to 
-``the input contains the word $w$ tagged as with part of speech $p$.''
+``the input contains the word $w$ tagged as with part of speech $p$.'' 
 Universal quantification ($\forall w \in$ vocabulary, $\forall p \in$ POS tagset) 
 is usually assumed, subject to limitations of the data.
+Formally, a percept template $\tilde{\Phi}$ is a higher-order function 
+that produces percept functions: $\forall w,p,\ \tilde{\Phi}(w, p) = \lambda w_x,p_x.\ \lsem w_x=w \wedge p_x=p \rsem$.
 
 Sometimes the template description includes a variable for the label, 
 in which case it is a feature (rather than percept) template.
 Indeed, a regular mapping from percepts to features, 
 as in the cross-product parametrization, can be described in terms of a feature template 
-whose variables are percepts and labels: ``percept $\phi$ and label $y$ $\forall \phi\in\Phi, y\in\mathcal{Y}$.''
-
+whose variables are percepts and labels: 
+%``percept $\phi$ and label $y$ $\forall \phi\in\Phi, y\in\mathcal{Y}$.''
+$\forall \phi\in\Phi, y\in\mathcal{Y},\ \tilde{F}(\phi,y) = \lambda x,y'.\ \phi(x) \cdot \lsem y'=y \rsem$.
 
 \subsection{Richer features\nss{better name?}}\label{sec:richer}
 
