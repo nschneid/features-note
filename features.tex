@@ -301,10 +301,10 @@ and $d = |\boldsymbol{\theta}| = c \times Y$---there is one parameter for every 
 for now that there is only one characteristic of each {\em output}, the identity of the label. \Sref{sec:richer} relaxes this assumption.}
 In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x)$ for all $k\in\{1,2,\ldots,Y\}$.
 We will refer to $\boldsymbol{\phi}(x)$ as the {\bf percept}\footnote{This is a nonstandard term; we are introducing 
-it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''; 
-may also be called a ``base feature''\nss{is this standard or just Brendan?}) and other times to the variable associated with a parameter, 
+it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''),
+and other times to the variable associated with a parameter, 
 which depends on both the input and the output.} function (a percept being a characteristic of the input),
-and this parametrization of the feature function $\mathbf{f}$ as the {\bf cross-product}\footnote{\nss{I am not aware of any standard term for this}} 
+and this parametrization of the feature function $\mathbf{f}$ as the {\bf cross-product}\footnote{The cross-product parameterization is the most common.  In fact, many authors define multiclass logistic regression in terms of this parameterization; e.g.~Hastie et al., \emph{Elements of Statistical Learning}.  These and authors use the term ``feature'' to refer to what we call ``percepts.''}
 parametrization, as there is one parameter for every pair of input-output characteristics.
 
 For example: Suppose that our input $x$ is a document, and the label space $\mathcal{Y}$ consists of genre categories ({\sc article}, {\sc transcript}, {\sc recipe}, etc.).
