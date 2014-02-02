@@ -4,7 +4,7 @@
 \usepackage{relsize} % relative font sizes (e.g. \smaller). must precede ACL style
 %\usepackage{style/acl2012}
 \usepackage[linkcolor=blue]{hyperref}
-\usepackage{natbib}
+\usepackage[round]{natbib}
 
 %\usepackage{times}
 %\usepackage{latexsym}
@@ -284,7 +284,8 @@ given parameters $\boldsymbol{\theta}\in\mathbb{R}^d$ such that $\theta_j$ is as
 g_{\boldsymbol{\theta}}(x,y) = \sum_{j=1}^d \theta_j f_j(x,y)
 = \boldsymbol{\theta}^{\top} \mathbf{f}(x,y)
 \end{equation}
-And here is a {\bf log-linear} or {\bf softmax} scoring function:\footnote{The denominator (sum over all labels) is called the {\bf partition function}, sometimes denoted $Z_{\boldsymbol{\theta}}(x)$. It normalizes the scores to be a probability distribution (nonnegative and summing to 1).}
+And here is a {\bf log-linear} scoring function, which composes the linear scoring function within the 
+{\bf softmax} function (to scale it between 0 and 1), which is in turn composed within a logarithm:\footnote{The denominator (sum over all labels) is called the {\bf partition function}, sometimes denoted $Z_{\boldsymbol{\theta}}(x)$. It normalizes the scores to be a probability distribution (nonnegative and summing to 1).}
 \begin{equation}\label{eq:softmax}
 g_{\boldsymbol{\theta}}(x,y) = \log\frac{\exp{\sum_{j=1}^d \theta_j f_j(x,y)}}{\sum_{y'\in\mathcal{Y}}\exp{\sum_{j=1}^d \theta_j f_j(x,y')}}
 = \boldsymbol{\theta}^{\top} \mathbf{f}(x,y) - \log{\sum_{y'\in\mathcal{Y}}\exp{\boldsymbol{\theta}^{\top} \mathbf{f}(x,y')}}
@@ -297,7 +298,7 @@ Most commonly, the multiclass feature function looks like this:\nss{I am going f
 where $\boldsymbol{\phi}: \mathcal{X}\rightarrow\mathbb{R}^c$ describes every input with $c$ real-valued\footnote{For discrete data, these are often binary, though the models we describe here do not depend on that. A document could be featurized with relative frequencies of its words, for example.} 
 characteristics (the values of these characteristics are the same no matter what label is considered), 
 and $d = |\boldsymbol{\theta}| = c \times Y$---there is one parameter for every pairing of an input characteristic with a label.\footnote{We assume 
-\nss{for now?} that there is only one characteristic of each {\em output}, the identity of the label.}
+for now that there is only one characteristic of each {\em output}, the identity of the label. \Sref{sec:richer} relaxes this assumption.}
 In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x)$ for all $k\in\{1,2,\ldots,Y\}$.
 We will refer to $\boldsymbol{\phi}(x)$ as the {\bf percept}\footnote{This is a nonstandard term; we are introducing 
 it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''; 
@@ -309,7 +310,7 @@ parametrization, as there is one parameter for every pair of input-output charac
 For example: Suppose that our input $x$ is a document, and the label space $\mathcal{Y}$ consists of genre categories ({\sc article}, {\sc transcript}, {\sc recipe}, etc.).
 In our terminology, one {\em percept} might be ``contains the word \textit{pie}''; the corresponding {\em features} 
 would be ``{\sc article} contains the word \textit{pie}'', ``{\sc transcript} contains the word \textit{pie}'', ``{\sc recipe} contains the word \textit{pie}'', 
-and so forth. When the {\sc article} label is being scored, only the features for the {\sc article} label have a nonzero value, 
+and so forth. When the {\sc article} label is being scored, only the features for the {\sc article} label are active,\footnote{i.e., have a nonzero value} 
 and likewise for the other categories. With just these features, the model (assuming good parameters) will score 
 a document with the word \textit{pie} as best matching the {\sc recipe} label, because the 
 ``{\sc recipe} contains the word \textit{pie}'' will have a higher weight than the other \textit{pie} features.
@@ -373,7 +374,7 @@ is a function of the positive-class feature value (they are mutually exclusive).
 The model is thus said to have one {\bf degree of freedom}.\footnote{\nss{how does this relate to {\bf overparametrization} and {\bf identifiability}?}}
 More generally, with $Y$ mutually exclusive labels and percept functions in $\mathbb{R}^c$, a (log-)linear classifier 
 never requires more than $(Y-1) \times c$ features. 
-Implicitly, one of the labels---call this the {\bf background label}---always receives a score of 0, 
+Implicitly, one of the labels---call this the {\bf background label}---can be assigned a score of 0 for all inputs, 
 and the non-background labels are scored relative to 0 (a positive score for an input means it outranks the background label; 
 a negative score means it is a worse fit). Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the classifier can then be rewritten as
 
@@ -409,17 +410,86 @@ can be left out of the feature vector (\Sref{sec:bg})---with slight computationa
 
 
 
+\subsection{Conjunctions and disjunctions}\label{sec:complex}
 
-\nss{feature template (``featureme''); conjunctions/disjunctions}
+It is quite common to combine characteristics of the input to form a more specific percept.
+For example, consider a sentiment classification task where the words of the input text have been 
+tagged with a part of speech (POS). In addition to percepts for words (e.g., \textit{nice}) 
+and for POS tags (e.g., \textsc{Adjective})---call these \textbf{atomic} percepts---these may be 
+\textbf{conjoined} to form word-and-tag percepts (e.g., a percept that fires if and only if the input contains 
+the word \textit{nice} tagged as an \textsc{Adjective}; or another that fires where the input contains 
+the word \textit{nice} following an \textsc{Adverb}; and so forth).
+These \textbf{complex} percepts can be more informative than the atomic percepts, 
+perhaps because they are less ambiguous (\textit{nice} as adjective vs.~name of a city in France).
+But conjoined percepts tend to be more sparse (less frequent in data), and thus their parameters might be harder to learn, 
+so in a conditional model it is usually advisable to include both atomic and complex percepts, 
+even if some are implied by others.
 
-\nss{tying/sharing}
+Another kind of complex percept that may be used is a \textbf{disjunction}: it is active if 
+{\em any} of its disjuncts are active. For example, if a word is known to have spelling variants, 
+like \textit{favor} and \textit{favour}, a feature that abstracts away from the spelling 
+may make the model more robust to different input sources (say, American vs.~British).
+Disjunctions can be interpreted as \textbf{parameter tying}---i.e., instead of separate parameters 
+to be learned for \textit{favor} and \textit{favour}, these are ``tied'' together.
+\nss{anything else to be said about parameter tying? do some people call it ``sharing''?}
 
+Mathematically, complex percepts are treated just like atomic percepts, 
+but the distinction can be exploited in implementation.
+Feature induction (\Sref{sec:induction}) seeks to discover conjunctions or disjunctions of 
+existing features/percepts that improve the discriminating power of the model.
+
+
+\subsection{Templates}
+
+NLP models routinely contain thousands or millions of features. 
+When describing the model in prose, we do not actually list every single one of these features; 
+instead, we give abstractions known as \textbf{templates}. 
+For instance, a document classification paper might say ``features are words in the document''---meaning, 
+in our terminology, that each {\em percept} encodes a word type, and is active for any input document containing that word.
+The percept template can be expressed with a variable: ``word $w$ appears in the document''; 
+the template instantiates one percept for every word in some vocabulary 
+(typically, the vocabulary of the training data; see \Sref{sec:extraction}). 
+Complex templates contain multiple variables: we can generalize the first conjunction example given in the previous section to 
+``the input contains the word $w$ tagged as with part of speech $p$.''
+Universal quantification ($\forall w \in$ vocabulary, $\forall p \in$ POS tagset) 
+is usually assumed, subject to limitations of the data.
+
+Sometimes the template description includes a variable for the label, 
+in which case it is a feature (rather than percept) template.
+Indeed, a regular mapping from percepts to features, 
+as in the cross-product parametrization, can be described in terms of a feature template 
+whose variables are percepts and labels: ``percept $\phi$ and label $y$ $\forall \phi\in\Phi, y\in\mathcal{Y}$.''
+
+
+\subsection{Richer features\nss{better name?}}\label{sec:richer}
+
+Thus far, we have assumed that features link input characteristics (percepts) 
+to a single label. But in general, a feature may be any real-valued function of the input and label.
+Here are two examples:
+
+\begin{itemize}
+\item \textbf{Features making sophisticated use of labels.} 
+When there is a known grouping or hierarchy of labels, a feature may combine a percept 
+with a disjunction of related labels. This might help the model to learn better generalizations, 
+especially if some labels are much rarer than others.
+
+\item \textbf{Features making sophisticated use of the input-and-label combination.}
+Consider a preposition correction model, where the input is a preposition in context 
+and the labels are candidate replacement prepositions \citep[as in][]{han-10}. 
+A feature template might encode the relative frequency of the label in the input context, 
+as estimated from a large corpus (perhaps separate from the data on which the model is learned).
+\end{itemize}
+
+These are mathematically straightforward, but the sophisticated relationship between input and output 
+is unusual and not anticipated by many implementations.
+
+\subsection{Other topics?}
 
 \nss{local vs.~nonlocal in structured models}
 
 \nss{softmax trick?}
 
-\section{Feature extraction}
+\section{Feature extraction}\label{sec:extraction}
 
 \nss{implementation issues: store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
 feature hashing; etc.}
@@ -432,7 +502,7 @@ feature hashing; etc.}
 
 \nss{unsupported features/count thresholds; OOV handling}
 
-\nss{feature induction}
+\subsection{Feature induction}\label{sec:induction}
 
 \subsection{Regularization}\label{sec:reg}
 
@@ -448,5 +518,7 @@ feature hashing; etc.}
 
 \nss{impact measure}
 
+\bibliographystyle{plainnat}
+\bibliography{features}
 
 \end{document}
