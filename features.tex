@@ -386,9 +386,9 @@ a negative score means it is a worse fit). Designating the background label $\ma
 g_\params(x,y) & \text{o.w.}\end{array}\right\}
 \end{equation}
 
-In practice, keeping parameters for all $Y$ labels (not using a background label) 
+In practice, keeping parameters for all $Y$ labels (not making one of them a background label) 
 should not affect predictive performance, and may make the model more interpretable (\Sref{sec:interp}).
-But using a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
+But designating a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
 
 \subsection{Categorical characteristics}
 
