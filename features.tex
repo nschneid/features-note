@@ -492,6 +492,8 @@ This section describes how large feature functions are designed in practice
 so as to harness the mathematical machinery described above.
 Typically, this involves the same dataset on which parameter weights will be learned, 
 i.e., the \textbf{training data}. (Weight learning is discussed in \Sref{sec:learning}.)
+The process of encoding each data point as percepts/features is called \textbf{extraction}.
+
 
 \subsection{Templates}
 
@@ -510,6 +512,20 @@ is usually assumed, subject to limitations of the data.
 Formally, a percept template $\tilde{\Phi}$ is a higher-order function 
 that produces percept functions: $\forall w,p,\ \tilde{\Phi}(w, p) = \lambda w_x,p_x.\ \lsem w_x=w \wedge p_x=p \rsem$.
 
+{\bf Open-ended templates} contain some variable whose possible values are data-dependent, not predetermined. 
+Natural language words/strings are a good example.
+By contrast, {\bf closed templates} contain only variables with predefined sets of possible values, 
+so all instantiations of a closed template can be enumerated ahead of time. 
+
+For a given instance and template, let \textbf{cardinality} refer to the number of active instantiations of the template.
+A template's cardinality is either \textbf{fixed} across instances, or is \textbf{flexible}, i.e., it may vary from instance to instance.
+E.g., consider the closed template ``input contains at least $k$ words'', where $k$ ranges from 100 to 1000 in increments of 100.
+Because this template performs thresholding, anywhere from 0 to 10 percepts may be active depending on the length of the input.
+But for the binning template ``input contains around $k$ words (rounded to the nearest 100)'', only one percept 
+will be active per input. Similarly, an open-ended template may have a known or variable number of instantiations per input: 
+``the $k$th word in the input is $w$'' ($k$ ranging from 1 to 5) has fixed cardinality, whereas 
+``the input contains word $w$'' has flexible cardinality.
+
 Sometimes the template description includes a variable for the label, 
 in which case it is a feature (rather than percept) template.
 Indeed, a regular mapping from percepts to features, 
@@ -520,7 +536,42 @@ $\forall \phi\in\Phi, y\in\mathcal{Y},\ \tilde{F}(\phi,y) = \lambda x,y'.\ \phi(
 
 \nss{feature template metalanguages}
 
-\nss{implementation issues: store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
+Feature extraction code often handles both nontemplatic percepts (e.g., ``input starts with a capital letter'') 
+and templatic percepts (e.g., ``input starts with the character $k$'') together.
+
+\subsection{Instantiation and recognition}
+
+Feature extraction code has to perform two tasks:
+\begin{itemize}
+  \item \textbf{Instantiation:} Decide which percepts/features will be included in the feature function used by the model. 
+  If there are templates (particularly open-ended ones), an initial pass is usually made 
+  to determine which instantiations of the templates are needed for the training data.
+  \item \textbf{Recognition:} Given the model's feature function, enumerate the active percepts/features and their values.
+  This is performed for each instance during training\footnote{To avoid repeating extraction on the training data 
+during each iteration of learning, consider caching each instance's percepts/features (see \nss{TODO}).} and at test time.
+\end{itemize}
+
+%\paragraph{Unsupported percepts and features.}
+Many percepts and features, especially instantiations of open-ended templates, will never be active in the training data. 
+These are said to be \textbf{unsupported}.
+Note that no unsupported {\em percept} will receive nonzero parameter weights during learning, 
+so only percepts attested in the training data (found during instantiation) 
+need to be included in the feature function (and accessed during recognition).\footnote{In the framework of (log-)linear 
+models addressed here, the only exception can be if a special regularizer is used that might push weights for unsupported percepts away from 0. 
+See \nss{TODO}.}
+To put this in perspective, instantiating a word template for every vocabulary item in the English language would be vastly ineffecient!
+On the other hand, unsupported {\em features} for supported percepts---percept-label pairs never seen in the training data---may be retained, 
+and can be slightly beneficial to the model by helping steer the classifier away from incorrect predictions.\nss{elaborate?} 
+
+%\paragraph{Cutoffs.}
+Sometimes a \textbf{cutoff} is used to remove infrequent percepts/features as measured by the training data.
+Active percepts/features are counted during instantiation, and then any occurring fewer than $k$ times 
+are discarded from the feature function. (The usual no-unsupported-percepts rule amounts to $k=1$ for percepts, 
+though this can be made stricter; a no-unsupported-features policy would apply a $k\geq 1$ cutoff to individual features.)
+For sufficiently small (relative to the size of the training data) values of $k$, 
+this will have little impact on accuracy but will make learning and classification more efficient. 
+
+\nss{implementation issues: data types/structures; store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
 feature hashing; etc.}
 
 
