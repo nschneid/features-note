@@ -164,7 +164,9 @@
 \newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu} % \bar is too narrow in math
 \newcommand{\cost}{c}
 
+\usepackage{nameref}
 \newcommand{\Sref}[1]{\S\ref{#1}}
+\newcommand{\Snref}[1]{\S\ref{#1}:~\nameref{#1}}
 \newcommand{\fref}[1]{figure~\ref{#1}}
 \newcommand{\ffref}[2]{figures~\ref{#1} and~\ref{#2}}
 \newcommand{\Fref}[1]{Figure~\ref{#1}}
@@ -234,7 +236,7 @@
 \hyphenation{de-ve-lop-ed}
 \hyphenation{comb-over}
 
-\title{\draftnotice{{\it\small WORKING DRAFT}\\[5pt] }Features in Models of Language}
+\title{\draftnotice{{\it\small WORKING DRAFT}\\[5pt] }Features in Models of Language:\\ From Parametrization to Implementation}
 
 \author{Nathan Schneider}
 
@@ -247,7 +249,22 @@
 This note discusses concepts, terminology, algorithms, and implementation details pertaining to features in discrete statistical models.
 \end{abstract}
 
-\section{Preliminaries}
+We begin in {\bf \Snref{sec:prelim}} with a mathematical overview of the sorts of models 
+that will be considered here.
+New terminology (especially: \textbf{percept} and \textbf{cross-product parametrization})
+and notation are explained.
+
+The next two sections address {\em feature design}.
+{\bf \Snref{sec:param}} elaborates on several mathematical issues of parametrization, 
+such as the treatment of features over categorical inputs.
+{\bf \Snref{sec:extraction}} offers an applied perspective on the development of feature functions---typically, 
+this combines description of abstract templates with data-driven generation and selection of specific features.
+
+Given a feature function, {\bf \Snref{sec:learning}} concerns {\em weight learning}, 
+focusing on supervised training. {\bf \Snref{sec:interp}} discusses the insights that can be gained 
+from examining learned model weights. 
+
+\section{Preliminaries}\label{sec:prelim}
 
 We will consider feature-based models such as logistic regression 
 that have discrete categorical outputs (classes, responses), which we will call {\bf labels}. 
@@ -303,7 +320,7 @@ In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x
 We will refer to $\boldsymbol{\phi}(x)$ as the {\bf percept}\footnote{This is a nonstandard term; we are introducing 
 it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''),
 and other times to the variable associated with a parameter, 
-which depends on both the input and the output.} function (a percept being a characteristic of the input),
+which depends on both the input and the output.\nss{manning \& schuetze p. 591 mentions this terminology issue}} function (a percept being a characteristic of the input),
 and this parametrization of the feature function $\mathbf{f}$ as the {\bf cross-product}\footnote{The cross-product parameterization is the most common. 
 In fact, many authors define multiclass logistic regression in terms of this parameterization; e.g., \citet{hastie-09}. 
 These and other authors use the term ``feature'' to refer to what we call a ``percept.''}
@@ -353,7 +370,7 @@ but does not depend on the space of outputs being fixed or require the cross-pro
   In classification, the highest-scoring label for the input wins. 
 \end{itemize}
 
-\section{Parametrization}
+\section{Parametrization}\label{sec:param}
 
 \subsection{Bias features}\label{sec:bias}
 
@@ -441,31 +458,6 @@ Feature induction (\Sref{sec:induction}) seeks to discover conjunctions or disju
 existing features/percepts that improve the discriminating power of the model.
 
 
-\subsection{Templates}
-
-NLP models routinely contain thousands or millions of features. 
-When describing the model in prose, we do not actually list every single one of these features; 
-instead, we give abstractions known as \textbf{templates}. 
-For instance, a document classification paper might say ``features are words in the document''---meaning, 
-in our terminology, that each {\em percept} encodes a word type, and is active for any input document containing that word.
-The percept template can be expressed with a variable: ``word $w$ appears in the document''; 
-the template instantiates one percept for every word in some vocabulary 
-(typically, the vocabulary of the training data; see \Sref{sec:extraction}). 
-Complex templates contain multiple variables: we can generalize the first conjunction example given in the previous section to 
-``the input contains the word $w$ tagged as with part of speech $p$.'' 
-Universal quantification ($\forall w \in$ vocabulary, $\forall p \in$ POS tagset) 
-is usually assumed, subject to limitations of the data.
-Formally, a percept template $\tilde{\Phi}$ is a higher-order function 
-that produces percept functions: $\forall w,p,\ \tilde{\Phi}(w, p) = \lambda w_x,p_x.\ \lsem w_x=w \wedge p_x=p \rsem$.
-
-Sometimes the template description includes a variable for the label, 
-in which case it is a feature (rather than percept) template.
-Indeed, a regular mapping from percepts to features, 
-as in the cross-product parametrization, can be described in terms of a feature template 
-whose variables are percepts and labels: 
-%``percept $\phi$ and label $y$ $\forall \phi\in\Phi, y\in\mathcal{Y}$.''
-$\forall \phi\in\Phi, y\in\mathcal{Y},\ \tilde{F}(\phi,y) = \lambda x,y'.\ \phi(x) \cdot \lsem y'=y \rsem$.
-
 \subsection{Richer features\nss{better name?}}\label{sec:richer}
 
 Thus far, we have assumed that features link input characteristics (percepts) 
@@ -494,7 +486,39 @@ is unusual and not anticipated by many implementations.
 
 \nss{softmax trick?}
 
-\section{Feature extraction}\label{sec:extraction}
+\section{Extraction}\label{sec:extraction}
+
+This section describes how large feature functions are designed in practice
+so as to harness the mathematical machinery described above.
+Typically, this involves the same dataset on which parameter weights will be learned, 
+i.e., the \textbf{training data}. (Weight learning is discussed in \Sref{sec:learning}.)
+
+\subsection{Templates}
+
+NLP models routinely contain thousands or millions of features. 
+When describing the model in code or prose, we do not actually list every single one of these features; 
+instead, we employ abstractions known as \textbf{templates}. 
+For instance, a document classification paper might say ``features are words in the document''---meaning, 
+in our terminology, that each {\em percept} encodes a word type, and is active for any input document containing that word.
+The percept template can be expressed with a variable: ``word $w$ appears in the document''; 
+the template instantiates one percept for every word in some vocabulary 
+(typically, the vocabulary of the training data). 
+Complex templates contain multiple variables: we can generalize the first conjunction example given in the previous section to 
+``the input contains the word $w$ tagged as with part of speech $p$.'' 
+Universal quantification ($\forall w \in$ vocabulary, $\forall p \in$ POS tagset) 
+is usually assumed, subject to limitations of the data.
+Formally, a percept template $\tilde{\Phi}$ is a higher-order function 
+that produces percept functions: $\forall w,p,\ \tilde{\Phi}(w, p) = \lambda w_x,p_x.\ \lsem w_x=w \wedge p_x=p \rsem$.
+
+Sometimes the template description includes a variable for the label, 
+in which case it is a feature (rather than percept) template.
+Indeed, a regular mapping from percepts to features, 
+as in the cross-product parametrization, can be described in terms of a feature template 
+whose variables are percepts and labels: 
+%``percept $\phi$ and label $y$ $\forall \phi\in\Phi, y\in\mathcal{Y}$.''
+$\forall \phi\in\Phi, y\in\mathcal{Y},\ \tilde{F}(\phi,y) = \lambda x,y'.\ \phi(x) \cdot \lsem y'=y \rsem$.
+
+\nss{feature template metalanguages}
 
 \nss{implementation issues: store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
 feature hashing; etc.}
