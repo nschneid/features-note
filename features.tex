@@ -38,24 +38,7 @@
 % \setcode{utf8} % use UTF-8 Arabic
 % \newcommand{\Ar}[1]{\RL{\novocalize #1}} % Arabic text
 
-\usepackage{listings}
-
-\lstset{
-  basicstyle=\rmshape,
-  xleftmargin=3em,
-  aboveskip=0pt,
-  belowskip=-3pt, %-.5\baselineskip, % correct for extra paragraph break inserted after listing
-%   literate={->}{$\rightarrow$}{2}
-%            {α}{$\alpha$}{1}
-%            {δ}{$\delta$}{1}
-%            {(}{$($}{1}
-%            {)}{$)$}{1}
-%            {[}{$[$}{1}
-%            {]}{$]$}{1}
-%            {|}{$|$}{1}
-%            {+}{\ensuremath{^+}}{1}
-%            {*}{\ensuremath{^*}}{1}
-}
+\usepackage[procnames]{listings}
 
 \usepackage{amssymb}	%amsfonts,eucal,amsbsy,amsthm,amsopn
 \usepackage{amsmath}
@@ -123,17 +106,30 @@
 \definecolor{lavender}{rgb}{0.65,0.55,1.0}
 
 % Settings for algorithm listings
+\makeatletter
+\lst@AddToHook{EveryPar}{%
+  \label{lst:\thelstnumber}% make a label for each line number except the first (assumes only one listing in the document)
+}
+\makeatother
 \lstset{
+% basicstyle=\rmshape,
+  numbers=left,
+  numberstyle=\tt\color{gray},
+  firstnumber=2,
+  stepnumber=5,
+  xleftmargin=3em,
   language=Python,
   upquote=true,
   showstringspaces=false,
   formfeed=\newpage,
   tabsize=1,
+  stringstyle=\color{mdgreen},
   commentstyle=\itshape\color{lavender},
   basicstyle=\small\smaller\ttfamily,
-  morekeywords={lambda},
-  emph={upward,downward,tc},
-  emphstyle=\underbar,
+  morekeywords={lambda,with,as},
+  keywordstyle=\bfseries\color{magenta},
+  procnamekeys={def},
+  procnamestyle=\bfseries\color{orange},
   aboveskip=0cm,
   belowskip=0cm
 }
@@ -176,6 +172,8 @@
 \newcommand{\Tref}[1]{Table~\ref{#1}}
 \newcommand{\aref}[1]{algorithm~\ref{#1}}
 \newcommand{\Aref}[1]{Algorithm~\ref{#1}}
+\newcommand{\appref}[1]{appendix~\ref{#1}}
+\newcommand{\Appref}[1]{Appendix~\ref{#1}}
 \newcommand{\fnref}[1]{footnote~\ref{#1}}
 \newcommand{\eref}[1]{\eqref{#1}}
 
@@ -235,6 +233,8 @@
 \hyphenation{base-line}
 \hyphenation{de-ve-lop-ed}
 \hyphenation{comb-over}
+\hyphenation{per-cept}
+\hyphenation{per-cepts}
 
 \title{\draftnotice{{\it\small WORKING DRAFT}\\[5pt] }Features in Models of Language:\\ From Parametrization to Implementation}
 
@@ -492,7 +492,7 @@ This section describes how large feature functions are designed in practice
 so as to harness the mathematical machinery described above.
 Typically, this involves the same dataset on which parameter weights will be learned, 
 i.e., the \textbf{training data}. (Weight learning is discussed in \Sref{sec:learning}.)
-The process of encoding each data point as percepts/features is called \textbf{extraction}.
+The process of encoding each data point as percepts\slash features is called \textbf{extraction}.
 
 
 \subsection{Templates}
@@ -539,16 +539,16 @@ $\forall \phi\in\Phi, y\in\mathcal{Y},\ \tilde{F}(\phi,y) = \lambda x,y'.\ \phi(
 Feature extraction code often handles both nontemplatic percepts (e.g., ``input starts with a capital letter'') 
 and templatic percepts (e.g., ``input starts with the character $k$'') together.
 
-\subsection{Instantiation and recognition}
+\subsection{Instantiation and recognition}\label{sec:inst}
 
 Feature extraction code has to perform two tasks:
 \begin{itemize}
-  \item \textbf{Instantiation:} Decide which percepts/features will be included in the feature function used by the model. 
+  \item \textbf{Instantiation:} Decide which percepts\slash features will be included in the feature function used by the model. 
   If there are templates (particularly open-ended ones), an initial pass is usually made 
   to determine which instantiations of the templates are needed for the training data.
-  \item \textbf{Recognition:} Given the model's feature function, enumerate the active percepts/features and their values.
+  \item \textbf{Recognition:} Given the model's feature function, enumerate the active percepts\slash features and their values.
   This is performed for each instance during training\footnote{To avoid repeating extraction on the training data 
-during each iteration of learning, consider caching each instance's percepts/features (see \nss{TODO}).} and at test time.
+during each iteration of learning, consider caching each instance's percepts\slash features (see \nss{TODO}).} and at test time.
 \end{itemize}
 
 %\paragraph{Unsupported percepts and features.}
@@ -564,26 +564,67 @@ On the other hand, unsupported {\em features} for supported percepts---percept-l
 and can be slightly beneficial to the model by helping steer the classifier away from incorrect predictions.\nss{elaborate?} 
 
 %\paragraph{Cutoffs.}
-Sometimes a \textbf{cutoff} is used to remove infrequent percepts/features as measured by the training data.
-Active percepts/features are counted during instantiation, and then any occurring fewer than $k$ times 
+Sometimes a \textbf{cutoff} is used to remove infrequent percepts\slash features as measured by the training data.
+Active percepts\slash features are counted during instantiation, and then any occurring fewer than $k$ times 
 are discarded from the feature function. (The usual no-unsupported-percepts rule amounts to $k=1$ for percepts, 
 though this can be made stricter; a no-unsupported-features policy would apply a $k\geq 1$ cutoff to individual features.)
 For sufficiently small (relative to the size of the training data) values of $k$, 
 this will have little impact on accuracy but will make learning and classification more efficient. 
 
-\nss{implementation issues: data types/structures; store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
-feature hashing; etc.}
+\subsection{Implementing extraction and lookup}
 
-\paragraph{Background label.} choose a background label (\Sref{sec:bg})
+Extracting/accessing a large number of features can be a major performance bottleneck, 
+but we describe several strategies for making learning and classification code fast.
+Margin notes link to relevant portions of the reference implementation (\appref{ex}).
 
-\paragraph{String indexing.} store categorical percepts as integers rather than strings
+\begin{itemize}
+\item \textbf{Sparse vs.~dense data structures.} 
+\marginpar{\small \hyperref[lst:57]{$\rightarrow$~\textsmaller{\texttt{active\_percepts}}}}
+The number of active percepts\slash features for an instance 
+is generally much smaller than the number of parameters \nss{refer to sparsity discussion above}, 
+so a sparse data structure such as a map should be used rather than a length-$d$ vector.
+\marginpar{\small \hyperref[lst:102]{$\rightarrow$~\textsmaller{\texttt{weights}}}} 
+On the other hand, a dense vector/array data structure should be used for the parameter weights
+if most weights will be nonzero (that is, unless the model enforces sparsity).
 
-\paragraph{Unpacking.} instead of storing complex percepts as a string (or indexed string), 
-use a tuple of atomic percepts
+\item \textbf{Cutoffs.} \marginpar{\small \hyperref[lst:34]{$\rightarrow$~\textsmaller{\texttt{percept\_cutoff}}}}
+Consider a percept or feature cutoff (\Sref{sec:inst}) 
+so there are fewer features to extract and weights to update. 
+With large amounts of training data, this may not have much of an effect on predictive performance.
 
-\paragraph{Implicit feature indexing.} with the cross-product parametrization, features can be 
-computed on the fly from percept and label indices
+\item \textbf{Background label.} \marginpar{\small \hyperref[lst:74]{$\rightarrow$~\textsmaller{\texttt{labels[-1]}}}}
+Choose a background label (\Sref{sec:bg}). 
+If the model excludes unsupported features (\Sref{sec:inst}), 
+be aware that this may have the effect of removing entire percepts from the model 
+(if those percepts are observed in training only with the background label).
 
+\item \textbf{String indexing.} \marginpar{\small \hyperref[lst:41]{$\rightarrow$~\textsmaller{\texttt{index\_string()}}}}
+Store categorical percepts as integers rather than strings, 
+maintaining a mapping between the percept name and its index. 
+This incurs additional memory and runtime overhead for feature extraction, 
+but reduces memory and runtime during the crucial step of scoring the instance.
+Two alternatives are:
+\begin{itemize}
+\item \textbf{Interning.} This ensures there is only one copy in memory of any given string. 
+Interning functionality is usually built in to the programming language, though 
+a map can be used instead to store canonical copies of strings. 
+\item \textbf{Hashing.} An extreme form of percept or feature indexing is to use a hash function 
+instead of maintaining data structures that ensure there is a one-to-one mapping.\footnote{See \citep{weinberger-09} and \url{http://en.wikipedia.org/wiki/Feature_hashing}.}
+Thus, there is a chance that multiple percepts\slash features will receive the same hash code and therefore 
+be mapped to the same parameter. Hashing should be considered for very large models, where
+the memory savings is substantial and occasional hash collisions should not impair predictive performance.
+\end{itemize}
+
+\item \textbf{Unpacking.} \marginpar{\small \hyperref[lst:45]{$\rightarrow$~\textit{line 45}}}
+Instead of storing complex percepts as a string (or indexed string), 
+use a tuple of atomic percepts to avoid the runtime overhead of string concatenation.
+There will potentially be a smaller memory footprint as well, because strings (or string indices) 
+will be reused in multiple features.
+
+\item \textbf{Implicit feature indexing.} \marginpar{\small \hyperref[lst:66]{$\rightarrow$~\textsmaller{\texttt{feature\_index()}}}}
+With the cross-product parametrization \eref{eq:crossprod}, 
+feature indices can be computed on the fly from percept and label indices.
+\end{itemize}
 
 \section{Learning}\label{sec:learning}
 
@@ -601,6 +642,11 @@ computed on the fly from percept and label indices
 \nss{pointers to un/semi-supervised approaches}
 % - semi-supervised learning/domain adaptation: posterior regularization; active learning; transfer learning
 % - unsupervised learning: generative better?; Berg-Kirkpatrick
+
+\subsection{Implementing learning}
+
+\nss{implementation issues: store features in memory/disk?; sparse updates}
+
 
 \section{Interpretation}\label{sec:interp}
 
