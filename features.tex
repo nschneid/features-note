@@ -41,20 +41,20 @@
 \usepackage{listings}
 
 \lstset{
-  basicstyle=\itshape,
+  basicstyle=\rmshape,
   xleftmargin=3em,
   aboveskip=0pt,
   belowskip=-3pt, %-.5\baselineskip, % correct for extra paragraph break inserted after listing
-  literate={->}{$\rightarrow$}{2}
-           {α}{$\alpha$}{1}
-           {δ}{$\delta$}{1}
-           {(}{$($}{1}
-           {)}{$)$}{1}
-           {[}{$[$}{1}
-           {]}{$]$}{1}
-           {|}{$|$}{1}
-           {+}{\ensuremath{^+}}{1}
-           {*}{\ensuremath{^*}}{1}
+%   literate={->}{$\rightarrow$}{2}
+%            {α}{$\alpha$}{1}
+%            {δ}{$\delta$}{1}
+%            {(}{$($}{1}
+%            {)}{$)$}{1}
+%            {[}{$[$}{1}
+%            {]}{$]$}{1}
+%            {|}{$|$}{1}
+%            {+}{\ensuremath{^+}}{1}
+%            {*}{\ensuremath{^*}}{1}
 }
 
 \usepackage{amssymb}	%amsfonts,eucal,amsbsy,amsthm,amsopn
@@ -123,21 +123,21 @@
 \definecolor{lavender}{rgb}{0.65,0.55,1.0}
 
 % Settings for algorithm listings
-% \lstset{
-%   language=Python,
-%   upquote=true,
-%   showstringspaces=false,
-%   formfeed=\newpage,
-%   tabsize=1,
-%   commentstyle=\itshape\color{lavender},
-%   basicstyle=\small\smaller\ttfamily,
-%   morekeywords={lambda},
-%   emph={upward,downward,tc},
-%   emphstyle=\underbar,
-%   aboveskip=0cm,
-%   belowskip=-.5cm
-% }
-%\renewcommand{\lstlistingname}{Algorithm}
+\lstset{
+  language=Python,
+  upquote=true,
+  showstringspaces=false,
+  formfeed=\newpage,
+  tabsize=1,
+  commentstyle=\itshape\color{lavender},
+  basicstyle=\small\smaller\ttfamily,
+  morekeywords={lambda},
+  emph={upward,downward,tc},
+  emphstyle=\underbar,
+  aboveskip=0cm,
+  belowskip=0cm
+}
+\renewcommand{\lstlistingname}{Algorithm}
 
 
 \newcommand{\ensuretext}[1]{#1}
@@ -574,6 +574,16 @@ this will have little impact on accuracy but will make learning and classificati
 \nss{implementation issues: data types/structures; store features in memory/disk? separate percepts from features when using the cross-product parametrization; 
 feature hashing; etc.}
 
+\paragraph{Background label.} choose a background label (\Sref{sec:bg})
+
+\paragraph{String indexing.} store categorical percepts as integers rather than strings
+
+\paragraph{Unpacking.} instead of storing complex percepts as a string (or indexed string), 
+use a tuple of atomic percepts
+
+\paragraph{Implicit feature indexing.} with the cross-product parametrization, features can be 
+computed on the fly from percept and label indices
+
 
 \section{Learning}\label{sec:learning}
 
@@ -598,7 +608,15 @@ feature hashing; etc.}
 
 \nss{impact measure}
 
+
+\appendix
+\section{Example implementation}\label{ex}
+%caption={Example classifier implementation in Python.},
+\lstinputlisting{classifier.py}
+
 \bibliographystyle{plainnat}
 \bibliography{features}
+
+
 
 \end{document}
