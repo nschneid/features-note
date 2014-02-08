@@ -130,8 +130,8 @@
   keywordstyle=\bfseries\color{magenta},
   procnamekeys={def},
   procnamestyle=\bfseries\color{orange},
-  aboveskip=0cm,
-  belowskip=0cm
+  aboveskip=0.5cm,
+  belowskip=0.5cm
 }
 \renewcommand{\lstlistingname}{Algorithm}
 
@@ -718,6 +718,10 @@ then the dot product score is simply the sum of weights of active features: no m
 
 \appendix
 \section{Reference implementation}\label{ex}
+
+The following Python implementation demonstrates some of the feature handling techniques discussed in this document.
+Source code and data can be downloaded from \textsmaller{\url{https://github.com/nschneid/features-note/}}.
+
 %caption={Example classifier implementation in Python.},
 \lstinputlisting{classifier.py}
 
