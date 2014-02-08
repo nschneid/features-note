@@ -236,9 +236,9 @@
 \hyphenation{per-cept}
 \hyphenation{per-cepts}
 
-\title{\draftnotice{{\it\small WORKING DRAFT}\\[5pt] }Features in Models of Language:\\ From Parametrization to Implementation}
+\title{\draftnotice{{\it\small WORKING DRAFT}\\[5pt] }Features in Models of Language:\\ Parametrization Meets Implementation\thanks{Sources for this document are available at \textsmaller{\url{https://github.com/nschneid/features-note}}.}}
 
-\author{Nathan Schneider}
+\author{Nathan Schneider\\ \textsmaller{\texttt{\href{mailto:nschneid@cs.cmu.edu}{nschneid@cs.cmu.edu}}}}
 
 \date{}
 
@@ -583,6 +583,8 @@ though this can be made stricter; a no-unsupported-features policy would apply a
 For sufficiently small (relative to the size of the training data) values of $k$, 
 this will have little impact on accuracy but will make learning and classification more efficient. 
 
+\nss{(more sophisticated) feature selection techniques?}
+
 \subsection{Implementing extraction and lookup}
 
 Extracting/accessing a large number of features can be a major performance bottleneck. 
@@ -715,6 +717,10 @@ then the dot product score is simply the sum of weights of active features: no m
 
 \nss{impact measure}
 
+\section*{Acknowledgments}
+
+Thanks to the members of the \href{http://www.ark.cs.cmu.edu/}{Noah's ARK} lab at CMU 
+for their valuable suggestions, discussions, and feedback.
 
 \appendix
 \section{Reference implementation}\label{ex}
