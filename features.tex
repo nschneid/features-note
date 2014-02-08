@@ -264,6 +264,10 @@ Given a feature function, {\bf \Snref{sec:learning}} concerns {\em weight learni
 focusing on supervised training. {\bf \Snref{sec:interp}} discusses the insights that can be gained 
 from examining learned model weights. 
 
+To make the ideas in this document more concrete, 
+a Python reference implementation of feature extraction and weight learning
+appears in {\bf \appref{ex}}.
+
 \section{Preliminaries}\label{sec:prelim}
 
 We will consider feature-based models such as logistic regression 
@@ -490,10 +494,16 @@ is unusual and not anticipated by many implementations.
 
 This section describes how large feature functions are designed in practice
 so as to harness the mathematical machinery described above.
-Typically, this involves the same dataset on which parameter weights will be learned, 
-i.e., the \textbf{training data}. (Weight learning is discussed in \Sref{sec:learning}.)
-The process of encoding each data point as percepts\slash features is called \textbf{extraction}.
+Margin notes link to relevant portions of the reference implementation (\appref{ex}).
 
+The process of encoding \marginpar{\small \hyperref[lst:56]{$\rightarrow$~\textsmaller{\texttt{extract()}}}}
+each data point as percepts\slash features is called \textbf{extraction}.
+As discussed below, the programmer often specifies abstract \textbf{templates} 
+to be instantiated (filled in) in a data-driven fashion
+using the same dataset on which parameter weights will be learned, 
+i.e., the \textbf{training data}. (Weight learning is discussed in \Sref{sec:learning}.)
+When handling features, a variety of implementation techniques 
+are available to make effective use of runtime and memory resources.
 
 \subsection{Templates}
 
@@ -541,12 +551,14 @@ and templatic percepts (e.g., ``input starts with the character $k$'') together.
 
 \subsection{Instantiation and recognition}\label{sec:inst}
 
-Feature extraction code has to perform two tasks:
+Feature extraction code has to be used for two tasks:
 \begin{itemize}
-  \item \textbf{Instantiation:} Decide which percepts\slash features will be included in the feature function used by the model. 
+  \item \textbf{Instantiation:} \marginpar{\small \hyperref[lst:81]{$\rightarrow$~\textsmaller{\texttt{instantiate()}}}}
+  Decide which percepts\slash features will be included in the feature function used by the model. 
   If there are templates (particularly open-ended ones), an initial pass is usually made 
   to determine which instantiations of the templates are needed for the training data.
-  \item \textbf{Recognition:} Given the model's feature function, enumerate the active percepts\slash features and their values.
+  \item \textbf{Recognition:} \marginpar{\small \hyperref[lst:129]{$\rightarrow$~\textit{line 129}}}
+  Given the model's feature function, enumerate the active percepts\slash features and their values.
   This is performed for each instance during training\footnote{To avoid repeating extraction on the training data 
 during each iteration of learning, consider caching each instance's percepts\slash features (see \nss{TODO}).} and at test time.
 \end{itemize}
@@ -561,7 +573,7 @@ models addressed here, the only exception can be if a special regularizer is use
 See \nss{TODO}.}
 To put this in perspective, instantiating a word template for every vocabulary item in the English language would be vastly ineffecient!
 On the other hand, unsupported {\em features} for supported percepts---percept-label pairs never seen in the training data---may be retained, 
-and can be slightly beneficial to the model by helping steer the classifier away from incorrect predictions.\nss{elaborate?} 
+and can be slightly beneficial to the model by helping steer the classifier away from incorrect predictions. 
 
 %\paragraph{Cutoffs.}
 Sometimes a \textbf{cutoff} is used to remove infrequent percepts\slash features as measured by the training data.
@@ -573,9 +585,10 @@ this will have little impact on accuracy but will make learning and classificati
 
 \subsection{Implementing extraction and lookup}
 
-Extracting/accessing a large number of features can be a major performance bottleneck, 
-but we describe several strategies for making learning and classification code fast.
-Margin notes link to relevant portions of the reference implementation (\appref{ex}).
+Extracting/accessing a large number of features can be a major performance bottleneck. 
+We discuss the efficiency tradeoffs of several feature handling optimizations.
+
+\subsubsection{Optimizations for both memory and runtime}
 
 \begin{itemize}
 \item \textbf{Sparse vs.~dense data structures.} 
@@ -587,44 +600,89 @@ so a sparse data structure such as a map should be used rather than a length-$d$
 On the other hand, a dense vector/array data structure should be used for the parameter weights
 if most weights will be nonzero (that is, unless the model enforces sparsity).
 
-\item \textbf{Cutoffs.} \marginpar{\small \hyperref[lst:34]{$\rightarrow$~\textsmaller{\texttt{percept\_cutoff}}}}
-Consider a percept or feature cutoff (\Sref{sec:inst}) 
-so there are fewer features to extract and weights to update. 
-With large amounts of training data, this may not have much of an effect on predictive performance.
-
-\item \textbf{Background label.} \marginpar{\small \hyperref[lst:74]{$\rightarrow$~\textsmaller{\texttt{labels[-1]}}}}
-Choose a background label (\Sref{sec:bg}). 
-If the model excludes unsupported features (\Sref{sec:inst}), 
-be aware that this may have the effect of removing entire percepts from the model 
-(if those percepts are observed in training only with the background label).
-
-\item \textbf{String indexing.} \marginpar{\small \hyperref[lst:41]{$\rightarrow$~\textsmaller{\texttt{index\_string()}}}}
-Store categorical percepts as integers rather than strings, 
-maintaining a mapping between the percept name and its index. 
-This incurs additional memory and runtime overhead for feature extraction, 
-but reduces memory and runtime during the crucial step of scoring the instance.
-Two alternatives are:
+\item \textbf{Feature indexing.}
+Features should be indexed to integers so weights can be stored in an array for fast dot product computation.
 \begin{itemize}
-\item \textbf{Interning.} This ensures there is only one copy in memory of any given string. 
-Interning functionality is usually built in to the programming language, though 
-a map can be used instead to store canonical copies of strings. 
-\item \textbf{Hashing.} An extreme form of percept or feature indexing is to use a hash function 
-instead of maintaining data structures that ensure there is a one-to-one mapping.\footnote{See \citep{weinberger-09} and \url{http://en.wikipedia.org/wiki/Feature_hashing}.}
-Thus, there is a chance that multiple percepts\slash features will receive the same hash code and therefore 
-be mapped to the same parameter. Hashing should be considered for very large models, where
-the memory savings is substantial and occasional hash collisions should not impair predictive performance.
-\end{itemize}
-
-\item \textbf{Unpacking.} \marginpar{\small \hyperref[lst:45]{$\rightarrow$~\textit{line 45}}}
-Instead of storing complex percepts as a string (or indexed string), 
-use a tuple of atomic percepts to avoid the runtime overhead of string concatenation.
-There will potentially be a smaller memory footprint as well, because strings (or string indices) 
-will be reused in multiple features.
-
 \item \textbf{Implicit feature indexing.} \marginpar{\small \hyperref[lst:66]{$\rightarrow$~\textsmaller{\texttt{feature\_index()}}}}
 With the cross-product parametrization \eref{eq:crossprod}, 
-feature indices can be computed on the fly from percept and label indices.
+feature indices should be computed on the fly.
+First number the labels, 
+and map percept names to integers (by storing an explicit mapping to unique indices, or by hashing).
+The weight vector can then be organized such that the feature index 
+is a simple function of the percept and label indices.
 \end{itemize}
+
+\item Choose a \textbf{background label} (\Sref{sec:bg}), 
+\marginpar{\small \hyperref[lst:74]{$\rightarrow$~\textsmaller{\texttt{labels[-1]}}}}
+and\slash or apply a percept or feature \textbf{cutoff} 
+\marginpar{\small \hyperref[lst:34]{$\rightarrow$~\textsmaller{\texttt{percept\_cutoff}}}}
+such as removing unsupported features (\Sref{sec:inst}), 
+in order to limit the dimensionality of the feature function.
+It is worth experimenting with a few alternatives, because cutoffs---especially 
+in combination with a background label\footnote{Consider a percept $\phi$ observed frequently in the training
+data, always with label $y$. Intuitively, this percept should be a good predictor of the label $y$---but
+if $y$ is designated as the background label and no unsupported features are included,
+$\phi$ will not be represented at all in the model!}---may affect the model's predictive power.
+\end{itemize}
+
+\subsubsection{Optimizations for memory}
+
+\begin{itemize}
+\item \textbf{String vocabulary compression.}
+Na\"{i}ve handling of strings may result in many duplicate copies in memory 
+(e.g., of any word that appears in multiple instances). 
+There are a few techniques to avoid this when loading instances or during extraction:
+\begin{itemize}
+\item \textbf{Interning.} This operation checks to see whether an identical string has been previously interned, 
+and if so returns that copy to eliminate duplication.
+Interning functionality is usually built in to the programming language (e.g., via an \textsmaller{\texttt{intern()}} method on strings), 
+though a map can be used instead to store canonical copies of strings.
+% mention that IdentityHashMap is available if all strings are interned?
+\item \textbf{Explicit indexing.} \marginpar{\small \hyperref[lst:41]{$\rightarrow$~\textsmaller{\texttt{index\_string()}}}}
+Assign a unique integer to each string that is read or produced 
+and use the integers (rather than strings) in the instance's features. 
+This is the most straightforward approach to indexing.
+A separate mapping between strings and integers will have to be maintained. 
+\item \textbf{Hashing.} Strings can instead be hashed to obtain an index, 
+though the index is not guaranteed to be unique.
+\end{itemize}
+
+\item \textbf{Bundling.} \marginpar{\small \hyperref[lst:45]{$\rightarrow$~\textit{line 45}}}
+Storing each complex percept in a lightweight tuple-like data structure rather than as a concatenated string 
+allows atomic parts of the percept to be reused. 
+(This may also improve runtime if string concatenation is expensive.)
+\end{itemize}
+
+\subsubsection{Optimizations for extraction runtime}
+
+\begin{itemize}
+  \item \textbf{Indexing data structures.} For fast lookup with explicit indexing of strings or tuples, 
+use a trie or a map with an efficient hash function.
+
+  \item \textbf{Percept/feature hashing.} An extreme form of percept or feature indexing is to use a hash function to compute the index 
+(without having to consult a data structure).\footnote{See \citep{weinberger-09} and \url{http://en.wikipedia.org/wiki/Feature_hashing}.}
+With a fast hash function, this reduces runtime overhead, 
+and if the names of the percepts\slash features are discarded following hashing, it saves memory as well.
+The downside is that hash values are not guaranteed to be unique; 
+thus, there is a chance that multiple percepts\slash features will 
+be mapped to the same parameter, though occasional collisions should have minimal impact in practice. 
+
+  \item \nss{parallelization?}
+\end{itemize}
+
+\subsubsection{Optimizations for scoring runtime}
+
+\begin{itemize}
+\item \textbf{With only binary features.} If all percepts\slash features in the model are binary, 
+then the dot product score is simply the sum of weights of active features: no multiplication is required.
+\end{itemize}
+
+% - alternative suggested by Sam: use locality-sensitive hashing to project to a low-dimensional binary feature space. 
+%   then, instead of a dot product, compute a Hamming distance. 
+%   in learning, the training instances are projected once, and the weight vector is re-projected each time 
+%   it is updated (so probably not ideal for online learning algorithms). 
+%   see \citep{?} for details.
+
 
 \section{Learning}\label{sec:learning}
 
@@ -646,6 +704,9 @@ feature indices can be computed on the fly from percept and label indices.
 \subsection{Implementing learning}
 
 \nss{implementation issues: store features in memory/disk?; sparse updates}
+\subsubsection{Optimizations for learning}
+% runtime savings during learning
+% - cache the extracted percepts for each instance so they do not have to be recomputed on each iteration
 
 
 \section{Interpretation}\label{sec:interp}
@@ -656,7 +717,7 @@ feature indices can be computed on the fly from percept and label indices.
 
 
 \appendix
-\section{Example implementation}\label{ex}
+\section{Reference implementation}\label{ex}
 %caption={Example classifier implementation in Python.},
 \lstinputlisting{classifier.py}
 
