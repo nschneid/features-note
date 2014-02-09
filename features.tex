@@ -294,10 +294,10 @@ in order to model similarity between documents as the number of words shared in 
 
 Our feature function, $\mathbf{f}$, is a vector-valued mapping between 
 characteristics of the input and characteristics of the output.
-We assume that $\mathbf{f}$ returns $d$ components---$\mathbf{f}: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}^d$.\footnote{The parameters in a model are sometimes called its {\bf weights}, 
-though we reserve the term ``weight'' for the actual value of a parameter.}
+We assume that $\mathbf{f}$ returns $d$ components---$\mathbf{f}: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}^d$.
 
-The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}$ weighted by corresponding parameters.
+The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}$ weighted by corresponding {\bf parameters}.\footnote{The parameters in a model are sometimes called its {\bf coefficients} or {\bf weights}. 
+We reserve the term ``weight'' for the value and ``parameter'' for the variable.}
 The (real) parameters weight the features to establish the goodness-of-fit between pairs of input-output characteristics.  
 Here is a {\bf linear} scoring function, 
 given parameters $\boldsymbol{\theta}\in\mathbb{R}^d$ such that $\theta_j$ is associated with the $j$th component of the feature vector:
