@@ -278,8 +278,8 @@ Without loss of generality, we arbitrarily index the labels: $\mathcal{Y}=\{\mat
 
 Given an input $x \in \mathcal{X}$, our decoding objective is 
 to choose the label $y \in \mathcal{Y}$ that best fits the input. 
-The function that does this is called a classifier: $h: \mathcal{X}\rightarrow\mathcal{Y}$.
-We often operationalize $h(x)$ as maximizing a real-valued scoring function, $g_\params: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}$, 
+The function that does this, $h(x)$, is called a \textbf{classifier}.
+We often operationalize $h(x)$ as maximizing a real-valued scoring function $g_\params(x,y)$, 
 where $\params$ represents the model parameters: 
 
 \begin{equation}\label{eq:classifier}
@@ -292,12 +292,29 @@ and links them to the possible labels.
 For example, if $x$ is a document, then we may want to encode it as a bag of words 
 in order to model similarity between documents as the number of words shared in common.
 
-Our feature function, $\mathbf{f}$, is a vector-valued mapping between 
-characteristics of the input and characteristics of the output.
-We assume that $\mathbf{f}$ returns $d$ components---$\mathbf{f}: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}^d$.
+\begin{table*}\small
+\begin{tabular}{ll}
+$x \in \mathcal{X}$ & input (observed) \\
+$y \in \mathcal{Y}$ & label (hidden; a.k.a. output, response) \\
+$Y = |\mathcal{Y}|$ & number of possible labels ($\mathcal{Y}$ is discrete, finite, and fixed across instances) \\
+$h: \mathcal{X}\rightarrow\mathcal{Y}$ & classifier: predicts a label given the input \\
+$g_\params: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}$ & scoring function for an input--label pair \\
+$\boldsymbol{\theta} \in \mathbb{R}^d$ & model parameters (a.k.a. weights, coefficients) \\
+$\mathbf{f}: \mathcal{X}\times\mathcal{Y}\rightarrow\mathbb{R}^d$ & feature function \\
+$\boldsymbol{\phi}: \mathcal{X}\rightarrow\mathbb{R}^c$ & percept function (typically, $c = d/Y$) \\
+\end{tabular}
+\caption{Summary of notation.}
+\label{tbl:notation}
+\end{table*}
 
-The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}$ weighted by corresponding {\bf parameters}.\footnote{The parameters in a model are sometimes called its {\bf coefficients} or {\bf weights}. 
-We reserve the term ``weight'' for the value and ``parameter'' for the variable.}
+
+Our feature function, $\mathbf{f}(x,y)$, is a vector-valued mapping between 
+characteristics of the input and characteristics of the output.
+We assume that $\mathbf{f}(x,y)$ returns a real vector with $d$ components.
+
+The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}(x,y)$ weighted by corresponding {\bf parameters}.
+%\footnote{The parameters in a model are sometimes called its {\bf coefficients} or {\bf weights}. 
+%We reserve the term ``weight'' for the value and ``parameter'' for the variable.}
 The (real) parameters weight the features to establish the goodness-of-fit between pairs of input-output characteristics.  
 Here is a {\bf linear} scoring function, 
 given parameters $\boldsymbol{\theta}\in\mathbb{R}^d$ such that $\theta_j$ is associated with the $j$th component of the feature vector:
@@ -312,23 +329,28 @@ g_{\boldsymbol{\theta}}(x,y) = \log\frac{\exp{\sum_{j=1}^d \theta_j f_j(x,y)}}{\
 = \boldsymbol{\theta}^{\top} \mathbf{f}(x,y) - \log{\sum_{y'\in\mathcal{Y}}\exp{\boldsymbol{\theta}^{\top} \mathbf{f}(x,y')}}
 \end{equation}
 
-Most commonly, the multiclass feature function looks like this:\nss{I am going for vector concatenation; there may be a better notation for this}
+Observe that the feature function $\mathbf{f}(x,y)$ depends on both the input and the label.
+It is often useful to distinguish a {\bf percept}\footnote{This is a nonstandard term; we are introducing 
+it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''),
+and other times to the variable associated with a parameter, 
+which depends on both the input and the output.\nss{manning \& schuetze p. 591 mentions this terminology issue}} function, 
+$\boldsymbol{\phi}(x)$---a percept being a characteristic of the input only.
+
+Most commonly, there is one parameter for every pairing of percept with a label.\footnote{We assume 
+for now that there is only one characteristic of each {\em output}, the identity of the label. \Sref{sec:richer} relaxes this assumption.}
+Formally, the multiclass feature function is then:
+%\nss{I am going for vector concatenation; there may be a better notation for this}
 \begin{equation}\label{eq:crossprod}
 \mathbf{f}(x,y=\mathrm{Y}^k) = \mathbf{0}_{c(k-1)};\  \boldsymbol{\phi}(x);\  \mathbf{0}_{c(Y-k)}
 \end{equation}
-where $\boldsymbol{\phi}: \mathcal{X}\rightarrow\mathbb{R}^c$ describes every input with $c$ real-valued\footnote{For discrete data, these are often binary, though the models we describe here do not depend on that. A document could be featurized with relative frequencies of its words, for example.} 
+where $\boldsymbol{\phi}(x)$ describes every input with $c$ real-valued\footnote{For discrete data, these are often binary, though the models we describe here do not depend on that. A document could be featurized with relative frequencies of its words, for example.} 
 characteristics (the values of these characteristics are the same no matter what label is considered), 
-and $d = |\boldsymbol{\theta}| = c \times Y$---there is one parameter for every pairing of an input characteristic with a label.\footnote{We assume 
-for now that there is only one characteristic of each {\em output}, the identity of the label. \Sref{sec:richer} relaxes this assumption.}
+and $d = |\boldsymbol{\theta}| = c \times Y$.
 In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x)$ for all $k\in\{1,2,\ldots,Y\}$.
-We will refer to $\boldsymbol{\phi}(x)$ as the {\bf percept}\footnote{This is a nonstandard term; we are introducing 
-it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''),
-and other times to the variable associated with a parameter, 
-which depends on both the input and the output.\nss{manning \& schuetze p. 591 mentions this terminology issue}} function (a percept being a characteristic of the input),
-and this parametrization of the feature function $\mathbf{f}$ as the {\bf cross-product}\footnote{The cross-product parameterization is the most common. 
+We term this parametrization of the feature function $\mathbf{f}(x,y)$ as the {\bf cross-product}
+parametrization, as there is one parameter for every pair of input--output characteristics.\footnote{The cross-product parameterization is the most common. 
 In fact, many authors define multiclass logistic regression in terms of this parameterization; e.g., \citet{hastie-09}. 
 These and other authors use the term ``feature'' to refer to what we call a ``percept.''}
-parametrization, as there is one parameter for every pair of input-output characteristics.
 
 For example: Suppose that our input $x$ is a document, and the label space $\mathcal{Y}$ consists of genre categories ({\sc article}, {\sc transcript}, {\sc recipe}, etc.).
 In our terminology, one {\em percept} might be ``contains the word \textit{pie}''; the corresponding {\em features} 
