@@ -710,10 +710,132 @@ then the dot product score is simply the sum of weights of active features: no m
 
 \section{Learning}\label{sec:learning}
 
+Let the labeled \textbf{training data} $\mathcal{D}$ be a collection of $(x,y)$ pairs.
+\textbf{Supervised learning} is the process of estimating model parameters from labeled data.
+This is formulated generically as choosing parameters to minimize a \textbf{loss function} that scores the 
+``badness'' of the training data according to the model:
+\begin{equation}
+\hat{\boldsymbol{\theta}} = \arg\min_{\boldsymbol{\theta}} \textit{loss}(\mathcal{D}; \boldsymbol{\theta})
+\end{equation}
+Some modeling assumptions and loss functions make this procedure easier than others.
+All of the loss functions considered below are \textbf{convex}, 
+meaning the loss function does not suffer from local optima.
+Convex and nonconvex optimization are entire subfields in their own right; 
+we address just a couple of popular convex loss functions and optimization methods here.
+
+\subsection{Na\"{i}ve Bayes and generative vs.~conditional models}
+
+The probabilistic feature-based multiclass classification model family known as \textbf{na\"{i}ve Bayes} assumes:
+\begin{itemize}
+  \item the cross-product parametrization is used, and
+  \item percepts are statistically independent of each other conditioned on the label.
+\end{itemize}
+
+Because of the independence assumption, na\"{i}ve Bayes models decompose into two kinds of probability distributions:
+the \textbf{class prior} $p(y)$, and a conditional distribution $p_i(\phi_i(x) \mid y)$ for each percept $\phi_i$.
+The independence assumption can be understood as instantiating the following \textbf{generative derivation}:
+first, the label $y$ is chosen stochastically from the prior distribution over labels; 
+then, conditioned on that choice, the percept values are independently drawn from the conditional distributions.
+
+The joint probability under the model is
+\begin{equation}
+p(x,y) = p(y)\prod_i{p_i(\phi_i(x) \mid y)}
+\end{equation}
+By Bayes' rule, the classifier under such a model is
+\begin{eqnarray}
+\hat{y} = h(x) &=& \arg\max_y{p(y \mid x)} = \arg\max_y{p(x,y)} \\
+               &=& \arg\max_y{p(y)\prod_i{p_i(\phi_i(x) \mid y)}}
+\end{eqnarray}
+This is a special case of a classifier using the linear scoring function \eref{eq:linear}, 
+where parameters are log probabilities: $\theta^y_i = \log{p_i(\phi_i(x) \mid y)}$ for non-bias percepts ($i>0$), and 
+$\theta^y_0 = \log{p(y)}$ for the bias percept, so $g_{\boldsymbol{\theta}}(x,y)=\log{p(x,y)}$.\footnote{Because under these assumptions, 
+the linear scoring function computes a log probability, the normalization in the log-linear scoring function \eref{eq:softmax} would be redundant.}
+
+The most popular flavor is \textbf{multinomial} na\"{i}ve Bayes, in which the 
+percepts are binary (or categorical), and 
+the prior and conditional distributions are all modeled as (discrete) multinomial distributions, i.e. lookup tables 
+whose probabilities must be nonnegative and sum to 1.\footnote{The generative derivation can be written as: 
+$y \sim \textsl{Mult}(\boldsymbol{\theta}^{\text{prior}})$; $\forall i,~\phi_i \sim \textsl{Mult}(\boldsymbol{\theta}^y_i)$.}
+
+Maximum likelihood estimation of a multinomial na\"{i}ve Bayes model amounts to minimizing the joint \textbf{log loss}:
+\begin{eqnarray}
+\hat{\boldsymbol{\theta}} &=& \arg\min_{\boldsymbol{\theta}} \textit{loss}(\mathcal{D}; \boldsymbol{\theta})
+=   \arg\min_{\boldsymbol{\theta}}{\sum_{(x,y) \in \mathcal{D}}{-\log{p_{\boldsymbol{\theta}}(x,y)}}} \\
+&=& \arg\min_{\boldsymbol{\theta}}{\sum_{(x,y) \in \mathcal{D}}{-\log{\left(p_{\boldsymbol{\theta}^{\text{prior}}}(y)\prod_i{p_{\boldsymbol{\theta}^y_i}(\phi_i(x) \mid y)}\right)}}}
+\end{eqnarray}
+Note that the log loss is equal to the negative log likelihood, which is why minimizing loss maximizes likelihood.
+Conveniently, there is a closed form solution---the multinomials are estimated simply by 
+counting relative frequencies in the training data:
+\begin{eqnarray}
+\hat{p}(y) &=& \frac{|\{(x',y')\in\mathcal{D}: y'=y\}|}{|\mathcal{D}|} \\
+\hat{p}_i(\phi_i(x) \mid y) &=& \frac{|\{(x',y')\in\mathcal{D}: y'=y~\wedge~\phi_i(x')=\phi_i(x)\}|}{|\{(x',y')\in\mathcal{D}: y'=y\}|}
+\end{eqnarray}
+
+Na\"{i}ve Bayes models are said to be \textbf{generative} because they model 
+the joint distribution $p(x,y)$, as opposed to \textbf{conditional} alternatives that only model $p(y \mid x)$.
+In other words, a generative model has to encode information about the plausibility of the input as well as the label, 
+whereas a conditional model takes the input at face value and assigns a probability to the label based on that.
+A conditional or marginal distribution can be recovered from the joint, but not vice versa.
+
+Despite the advantages of na\"{i}ve Bayes noted above---its representation of the full joint distribution, 
+and its simple and cheap supervised estimation procedure---there is a downside. 
+The assumption that all percepts are conditionally independent is usually, well, incredibly {\em na\"{i}ve}. 
+Notably, it is not uncommon in NLP to include \textbf{overlapping percepts\slash features} 
+that incorporate common aspects of the input. (For example, the percepts ``word is \textit{Martha}'' 
+and ``word contains a capital letter'' are not independent because the former implies the latter.)
+With large numbers of percepts over strings, interdependencies among them may be difficult to 
+characterize, so the independence assumption can be disadvantageous. 
+
+Because conditional classification models estimate only a conditional distribution and 
+do not (wrongly) assume feature independence, they usually give better classification accuracy 
+given large amounts of supervision. But giving up the independence assumptions 
+means we have to turn to a more sophisticated estimation procedure.
+
+\subsection{Discriminative estimation}
+
+In \textbf{discriminative} learning, we seek to find a model that does a good job choosing 
+(\textit{discriminating}) between labels given some input. 
+We do not have to worry about modeling how likely the input is a priori.
+Models learned discriminatively need not even be probabilistic (though some are).
+
+One popular discriminative loss function is the \textbf{conditional log loss}:
+\begin{equation}
+\textit{loss}_\text{cond. log}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{-\log{p_{\boldsymbol{\theta}}(y \mid x)}}
+\end{equation}
+The log-linear scoring function \eref{eq:softmax} can be interpreted as a giving a log conditional probability, 
+allowing us to rewrite the above as 
+\begin{equation}
+\sum_{(x,y)\in\mathcal{D}}{\left(-\boldsymbol{\theta}^\top\mathbf{f}(x,y)+\log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}}}\right)}
+\end{equation}
+A model with this loss will learn to produce a probability distribution over possible labels given an input.
+
+If the goal is to predict the single best label, the \textbf{hinge loss} is a popular alternative:\footnote{The hinge loss can be considered an approximation to the non-smooth \textbf{0--1 loss},
+$\sum_{(x,y)\in\mathcal{D}}{\lsem \left(\arg\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right)\neq y \rsem}$.}
+\begin{equation}
+\textit{loss}_\text{hinge}(\mathcal{D}; \boldsymbol{\theta}) = \left(\arg\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right) - \boldsymbol{\theta}^\top\mathbf{f}(x,y)
+\end{equation}
+This is cheaper to optimize than the log loss, because it does not require computing a partition function 
+(sum of scores for all labels) during learning.
+Unlike a probabilistic loss, as long as the model assigns the best score to the correct label, 
+the hinge loss does not care about the other labels' scores relative to each other. 
+
+\nss{advanced topics: margin/cost}
+
 \nss{estimation: objective, optimization---practical issues (e.g., fast score computation, sparse updates/averaging)}
 % (kinds of optimization: online vs. (mini)batch; gradient-based; margin-based vs. probabilistic; curriculum; joint/constrained/dual decomp)
 
 \nss{unsupported features/count thresholds; OOV handling}
+
+\subsubsection{Online optimization: SGD}
+
+\textbf{Online} optimization algorithms pass through the training data and incrementally update 
+the weights to better fit the data.
+
+\subsubsection{Batch optimization}
+
+In constrast to \textbf{online} algorithms, 
+\textbf{batch} algorithms compute statistics over the full training data 
+before making each update to the model weights.\footnote{\textbf{Mini-batch} optimization is a middle ground in which several training instances are used for each update \citep[p. 175]{smith}.}
 
 \subsection{Feature induction}\label{sec:induction}
 
