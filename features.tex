@@ -283,7 +283,7 @@ We often operationalize $h(x)$ as maximizing a real-valued scoring function $g_\
 where $\params$ represents the model parameters: 
 
 \begin{equation}\label{eq:classifier}
-\hat{y} = h(x) = \arg\max_{y\in\mathcal{Y}} g_\params(x,y)
+\hat{y} = h(x) = \argmax_{y\in\mathcal{Y}} g_\params(x,y)
 \end{equation}
 
 In NLP, $x$ is typically a linguistic unit---such as a word or document---with no inherent mathematical structure. 
@@ -424,7 +424,7 @@ and the non-background labels are scored relative to 0 (a positive score for an 
 a negative score means it is a worse fit). Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the classifier can then be rewritten as
 
 \begin{equation}\label{eq:classifier-bg}
-\hat{y} = h(x) = \arg\max_{y\in\mathcal{Y}} \left\{\begin{array}{cl}
+\hat{y} = h(x) = \argmax_{y\in\mathcal{Y}} \left\{\begin{array}{cl}
 0 & \text{if }y=\mathrm{Y}^{\textsc{bg}} \\
 g_\params(x,y) & \text{o.w.}\end{array}\right\}
 \end{equation}
@@ -715,7 +715,7 @@ Let the labeled \textbf{training data} $\mathcal{D}$ be a collection of $(x,y)$ 
 This is formulated generically as choosing parameters to minimize a \textbf{loss function} that scores the 
 ``badness'' of the training data according to the model:
 \begin{equation}
-\hat{\boldsymbol{\theta}} = \arg\min_{\boldsymbol{\theta}} \textit{loss}(\mathcal{D}; \boldsymbol{\theta})
+\hat{\boldsymbol{\theta}} = \argmin_{\boldsymbol{\theta}} \textit{loss}(\mathcal{D}; \boldsymbol{\theta})
 \end{equation}
 Some modeling assumptions and loss functions make this procedure easier than others.
 All of the loss functions considered below are \textbf{convex}, 
@@ -743,8 +743,8 @@ p(x,y) = p(y)\prod_i{p_i(\phi_i(x) \mid y)}
 \end{equation}
 By Bayes' rule, the classifier under such a model is
 \begin{eqnarray}
-\hat{y} = h(x) &=& \arg\max_y{p(y \mid x)} = \arg\max_y{p(x,y)} \\
-               &=& \arg\max_y{p(y)\prod_i{p_i(\phi_i(x) \mid y)}}
+\hat{y} = h(x) &=& \argmax_y{p(y \mid x)} = \argmax_y{p(x,y)} \\
+               &=& \argmax_y{p(y)\prod_i{p_i(\phi_i(x) \mid y)}}
 \end{eqnarray}
 This is a special case of a classifier using the linear scoring function \eref{eq:linear}, 
 where parameters are log probabilities: $\theta^y_i = \log{p_i(\phi_i(x) \mid y)}$ for non-bias percepts ($i>0$), and 
@@ -753,15 +753,15 @@ the linear scoring function computes a log probability, the normalization in the
 
 The most popular flavor is \textbf{multinomial} na\"{i}ve Bayes, in which the 
 percepts are binary (or categorical), and 
-the prior and conditional distributions are all modeled as (discrete) multinomial distributions, i.e. lookup tables 
+the prior and conditional distributions are all modeled as (discrete) multinomial distributions, i.e.~lookup tables 
 whose probabilities must be nonnegative and sum to 1.\footnote{The generative derivation can be written as: 
 $y \sim \textsl{Mult}(\boldsymbol{\theta}^{\text{prior}})$; $\forall i,~\phi_i \sim \textsl{Mult}(\boldsymbol{\theta}^y_i)$.}
 
 Maximum likelihood estimation of a multinomial na\"{i}ve Bayes model amounts to minimizing the joint \textbf{log loss}:
 \begin{eqnarray}
-\hat{\boldsymbol{\theta}} &=& \arg\min_{\boldsymbol{\theta}} \textit{loss}(\mathcal{D}; \boldsymbol{\theta})
-=   \arg\min_{\boldsymbol{\theta}}{\sum_{(x,y) \in \mathcal{D}}{-\log{p_{\boldsymbol{\theta}}(x,y)}}} \\
-&=& \arg\min_{\boldsymbol{\theta}}{\sum_{(x,y) \in \mathcal{D}}{-\log{\left(p_{\boldsymbol{\theta}^{\text{prior}}}(y)\prod_i{p_{\boldsymbol{\theta}^y_i}(\phi_i(x) \mid y)}\right)}}}
+\hat{\boldsymbol{\theta}} &=& \argmin_{\boldsymbol{\theta}} \textit{loss}(\mathcal{D}; \boldsymbol{\theta})
+=   \argmin_{\boldsymbol{\theta}}{\sum_{(x,y) \in \mathcal{D}}{-\log{p_{\boldsymbol{\theta}}(x,y)}}} \\
+&=& \argmin_{\boldsymbol{\theta}}{\sum_{(x,y) \in \mathcal{D}}{-\log{\left(p_{\boldsymbol{\theta}^{\text{prior}}}(y)\prod_i{p_{\boldsymbol{\theta}^y_i}(\phi_i(x) \mid y)}\right)}}}
 \end{eqnarray}
 Note that the log loss is equal to the negative log likelihood, which is why minimizing loss maximizes likelihood.
 Conveniently, there is a closed form solution---the multinomials are estimated simply by 
@@ -808,11 +808,26 @@ allowing us to rewrite the above as
 \sum_{(x,y)\in\mathcal{D}}{\left(-\boldsymbol{\theta}^\top\mathbf{f}(x,y)+\log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}}}\right)}
 \end{equation}
 A model with this loss will learn to produce a probability distribution over possible labels given an input.
-
-If the goal is to predict the single best label, the \textbf{hinge loss} is a popular alternative:\footnote{The hinge loss can be considered an approximation to the non-smooth \textbf{0--1 loss},
-$\sum_{(x,y)\in\mathcal{D}}{\lsem \left(\arg\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right)\neq y \rsem}$.}
+Assuming the cross-product parametrization, 
+the loss's gradient with respect to the parameter associated with percept $i$ and label $y$ is
 \begin{equation}
-\textit{loss}_\text{hinge}(\mathcal{D}; \boldsymbol{\theta}) = \left(\arg\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right) - \boldsymbol{\theta}^\top\mathbf{f}(x,y)
+\nabla^y_i = \sum_{(x,y^*=y)\in\mathcal{D}}{\left(-\phi_i(x)+\frac{\phi_i(x)\exp{\theta^y_i\phi_i(x)}}{\sum_{y'\in\mathcal{Y}}{\exp{\theta^{y'}_i\phi_i(x)}}}\right)}
+\end{equation}
+\nss{correct?}
+
+If the goal is to predict the single best label, the \textbf{max-margin loss} is a popular alternative:\footnote{The \textbf{cost function} assigns a nonnegative penalty to erroneous predictions.
+\nss{relationship to margin?} 
+With $\textit{cost}(y,y')=\lsem y'\neq y\rsem$, i.e.~all errors incur a cost of 1, this is called the \textbf{hinge loss}. 
+With no cost, it is the classic \textbf{perceptron} loss.
+All can be considered approximations to the discontinuous \textbf{0--1 loss},
+$\sum_{(x,y)\in\mathcal{D}}{\lsem \left(\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right)\neq y \rsem}$.\nss{right?}
+A cost function can be incorporated into a log-linear learning objective as well: this is called \textbf{softmax-margin} \citep{gimpel-10}.}
+\begin{equation}
+\textit{loss}_\text{margin}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{\left(- \boldsymbol{\theta}^\top\mathbf{f}(x,y) + \left(\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y') + \textit{cost}(y,y')}\right)\right)} 
+\end{equation}
+Its subgradient with respect to the $j$th parameter is
+\begin{equation}
+\nabla_j = 
 \end{equation}
 This is cheaper to optimize than the log loss, because it does not require computing a partition function 
 (sum of scores for all labels) during learning.
