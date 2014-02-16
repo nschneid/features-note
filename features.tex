@@ -710,6 +710,10 @@ then the dot product score is simply the sum of weights of active features: no m
 
 \section{Learning}\label{sec:learning}
 
+This document is not really intended as a tutorial on machine learning modeling or learning per se. 
+However, we will give an overview of some important approaches to learning feature-based models; 
+a much more thorough treatment appears in \citet{smith}. 
+
 Let the labeled \textbf{training data} $\mathcal{D}$ be a collection of $(x,y)$ pairs.
 \textbf{Supervised learning} is the process of estimating model parameters from labeled data.
 This is formulated generically as choosing parameters to minimize a \textbf{loss function} that scores the 
@@ -777,8 +781,8 @@ In other words, a generative model has to encode information about the plausibil
 whereas a conditional model takes the input at face value and assigns a probability to the label based on that.
 A conditional or marginal distribution can be recovered from the joint, but not vice versa.
 
-Despite the advantages of na\"{i}ve Bayes noted above---its representation of the full joint distribution, 
-and its simple and cheap supervised estimation procedure---there is a downside. 
+Despite the advantages of na\"{i}ve Bayes noted above---(a)~its representation of the full joint distribution, 
+and (b)~its simple and cheap supervised estimation procedure---there is a downside. 
 The assumption that all percepts are conditionally independent is usually, well, incredibly {\em na\"{i}ve}. 
 Notably, it is not uncommon in NLP to include \textbf{overlapping percepts\slash features} 
 that incorporate common aspects of the input. (For example, the percepts ``word is \textit{Martha}'' 
@@ -791,7 +795,7 @@ do not (wrongly) assume feature independence, they usually give better classific
 given large amounts of supervision. But giving up the independence assumptions 
 means we have to turn to a more sophisticated estimation procedure.
 
-\subsection{Discriminative estimation}
+\subsection{Discriminative objectives}
 
 In \textbf{discriminative} learning, we seek to find a model that does a good job choosing 
 (\textit{discriminating}) between labels given some input. 
@@ -815,19 +819,28 @@ the loss's gradient with respect to the parameter associated with percept $i$ an
 \end{equation}
 \nss{correct?}
 
-If the goal is to predict the single best label, the \textbf{max-margin loss} is a popular alternative:\footnote{The \textbf{cost function} assigns a nonnegative penalty to erroneous predictions.
+If the goal is to predict the single best label, the \textbf{max-margin loss} is a popular alternative:\footnote{The \textbf{cost function} assigns a nonnegative penalty to erroneous predictions during learning.
 \nss{relationship to margin?} 
 With $\textit{cost}(y,y')=\lsem y'\neq y\rsem$, i.e.~all errors incur a cost of 1, this is called the \textbf{hinge loss}. 
 With no cost, it is the classic \textbf{perceptron} loss.
 All can be considered approximations to the discontinuous \textbf{0--1 loss},
-$\sum_{(x,y)\in\mathcal{D}}{\lsem \left(\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right)\neq y \rsem}$.\nss{right?}
+$\sum_{(x,y)\in\mathcal{D}}{\lsem \left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right)\neq y \rsem}$.\nss{right?}
 A cost function can be incorporated into a log-linear learning objective as well: this is called \textbf{softmax-margin} \citep{gimpel-10}.}
 \begin{equation}
 \textit{loss}_\text{margin}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{\left(- \boldsymbol{\theta}^\top\mathbf{f}(x,y) + \left(\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y') + \textit{cost}(y,y')}\right)\right)} 
 \end{equation}
-Its subgradient with respect to the $j$th parameter is
+Its subgradient with respect to the $j$th parameter is:\footnote{Note that this is {\em negative} 
+for a feature that should have been active, but wasn't 
+(because the cost-augmented prediction is incorrect under the current parameters), 
+and {\em positive} for a feature that shouldn't have been active, but was under the current parameters.
+(We are minimizing, so lower is better.)
+Either way, the magnitude for the component of the gradient is simply the absolute value of the corresponding 
+feature---unless the cost-augmented predictor is correct, in which case it is 0. 
+The rationale for the cost function is to force the learner to make more errors when the score of a competitor label 
+is too close to the score of the gold label (the \textbf{margin} between them is below threshold);
+consequently, for such ``close calls,'' the learner will make corrections to the parameters out of an abundance of caution.}
 \begin{equation}
-\nabla_j = 
+\nabla_j = -f_j(x,y) + f_j(x,\left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')+cost(y,y')}\right))
 \end{equation}
 This is cheaper to optimize than the log loss, because it does not require computing a partition function 
 (sum of scores for all labels) during learning.
