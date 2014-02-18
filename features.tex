@@ -341,7 +341,7 @@ for now that there is only one characteristic of each {\em output}, the identity
 Formally, the multiclass feature function is then:
 %\nss{I am going for vector concatenation; there may be a better notation for this}
 \begin{equation}\label{eq:crossprod}
-\mathbf{f}(x,y=\mathrm{Y}^k) = \mathbf{0}_{c(k-1)};\  \boldsymbol{\phi}(x);\  \mathbf{0}_{c(Y-k)}
+\mathbf{f}(x,y=\mathrm{Y}^k) = [\overbrace{\underbrace{0, \ldots, 0\vphantom{\phi}}_{c(k-1)},\ \underbrace{\phi_1(x), \ldots, \phi_c(x)}_{c\vphantom{(}},\ \underbrace{0, \ldots, 0\vphantom{\phi}}_{c(Y-k)}}^d]^{\top}
 \end{equation}
 where $\boldsymbol{\phi}(x)$ describes every input with $c$ real-valued\footnote{For discrete data, these are often binary, though the models we describe here do not depend on that. A document could be featurized with relative frequencies of its words, for example.} 
 characteristics (the values of these characteristics are the same no matter what label is considered), 
@@ -350,7 +350,9 @@ In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x
 We term this parametrization of the feature function $\mathbf{f}(x,y)$ as the {\bf cross-product}
 parametrization, as there is one parameter for every pair of input--output characteristics.\footnote{The cross-product parameterization is the most common. 
 In fact, many authors define multiclass logistic regression in terms of this parameterization; e.g., \citet{hastie-09}. 
-These and other authors use the term ``feature'' to refer to what we call a ``percept.''}
+These and other authors use the term ``feature'' to refer to what we call a ``percept.''
+Some authors prefer a $Y \times c$ matrix formulation of the parameters, expressing the linear score as $\Theta \boldsymbol{\phi}(x)$ 
+where $\Theta_{k,j}=\theta_{c(k-1)+j}$ in the vector formulation.}
 
 For example: Suppose that our input $x$ is a document, and the label space $\mathcal{Y}$ consists of genre categories ({\sc article}, {\sc transcript}, {\sc recipe}, etc.).
 In our terminology, one {\em percept} might be ``contains the word \textit{pie}''; the corresponding {\em features} 
@@ -845,11 +847,45 @@ consequently, for such ``close calls,'' the learner will make corrections to the
 This is cheaper to optimize than the log loss, because it does not require computing a partition function 
 (sum of scores for all labels) during learning.
 Unlike a probabilistic loss, as long as the model assigns the best score to the correct label, 
-the hinge loss does not care about the other labels' scores relative to each other. 
+the hinge loss does not care about the other labels' scores relative to one another. 
 
-\nss{advanced topics: margin/cost}
+\subsection{Regularization}
 
-\nss{estimation: objective, optimization---practical issues (e.g., fast score computation, sparse updates/averaging)}
+To prevent the learner from getting carried away in fitting the training data, 
+it is common practice to use the learning objective
+\begin{equation}
+\hat{\boldsymbol{\theta}}, \hat{\lambda} = \argmin_{\boldsymbol{\theta}, \lambda}\ell(\mathcal{D}, \boldsymbol{\theta}, \lambda) = \argmin_{\boldsymbol{\theta}, \lambda}\textit{loss}(\mathcal{D}; \boldsymbol{\theta}) + \lambda R(\boldsymbol{\theta})
+\end{equation} 
+where the $\lambda R(\boldsymbol{\theta})$ term provides \textbf{regularization}.
+The nonnegative function $R(\boldsymbol{\theta})$ expresses a preference for certain models over others; 
+most typically, this means penalizing the model's complexity (distance from $\mathbf{0}$, according to a given metric).
+The regularization trades off with the loss---parameters that better fit the training data will tend to have a higher complexity. 
+A nonnegative hyperparameter, $\lambda$, controls this tradeoff. 
+$\lambda$ is usually tuned in an outer loop by line search, 
+and the value tried that gives the model best predictive accuracy on a held-out development set is chosen.
+
+The most popular flavors are $L_2$ (or \textbf{ridge}) and $L_1$ (or \textbf{Lasso}) regularization:\footnote{These can also be combined in what is known as \textbf{elastic net} regularization.}
+\begin{eqnarray}
+R_{L_2}(\boldsymbol{\theta}) = \tfrac{1}{2} ||\boldsymbol{\theta}||^2_2 = \sum_{j=1}^d \theta^2_j &&
+R_{L_1}(\boldsymbol{\theta}) = ||\boldsymbol{\theta}||_1 = \sum_{j=1}^d |\theta_j|
+\end{eqnarray}
+Both are convex, so with a convex loss function, the full learning objective will remain convex.
+$L_1$~regularization encourages many parameters to go to 0, but is not a smooth function, 
+and as such requires special optimization techniques.
+$L_2$~regularization tends to work at least as well as $L_1$ in terms of producing models
+that are accurate predictors.
+
+Means of preventing overfitting apart from modifying the learning objective might be called \textbf{procedural regularization}. 
+These include:
+\begin{itemize}
+  \item Choosing the number of iterations of optimization by \textbf{early stopping}, i.e., 
+  monitoring predictive accuracy on held-out development data and stopping once that accuracy fails to improve.
+  \item \textbf{Averaging} (or \textbf{voting} among) models of different optimization ``ages'' \citep{freund-99}.
+\end{itemize}
+
+\subsection{Optimization}
+
+\nss{practical issues (e.g., fast score computation, sparse updates/averaging)}
 % (kinds of optimization: online vs. (mini)batch; gradient-based; margin-based vs. probabilistic; curriculum; joint/constrained/dual decomp)
 
 \nss{unsupported features/count thresholds; OOV handling}
@@ -863,7 +899,7 @@ the weights to better fit the data.
 
 In constrast to \textbf{online} algorithms, 
 \textbf{batch} algorithms compute statistics over the full training data 
-before making each update to the model weights.\footnote{\textbf{Mini-batch} optimization is a middle ground in which several training instances are used for each update \citep[p. 175]{smith}.}
+before making each update to the model weights.\footnote{\textbf{Mini-batch} optimization is a middle ground in which several training instances are used for each update \citep[p.~175]{smith}.}
 
 \subsection{Feature induction}\label{sec:induction}
 
