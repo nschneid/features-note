@@ -126,7 +126,7 @@
   stringstyle=\color{mdgreen},
   commentstyle=\itshape\color{lavender},
   basicstyle=\small\smaller\ttfamily,
-  morekeywords={lambda,with,as},
+  morekeywords={lambda,with,as,assert},
   keywordstyle=\bfseries\color{magenta},
   procnamekeys={def},
   procnamestyle=\bfseries\color{orange},
@@ -346,7 +346,7 @@ Formally, the multiclass feature function is then:
 where $\boldsymbol{\phi}(x)$ describes every input with $c$ real-valued\footnote{For discrete data, these are often binary, though the models we describe here do not depend on that. A document could be featurized with relative frequencies of its words, for example.} 
 characteristics (the values of these characteristics are the same no matter what label is considered), 
 and $d = |\boldsymbol{\theta}| = c \times Y$.
-In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+j} = \phi_j(x)$ for all $k\in\{1,2,\ldots,Y\}$.
+In other words, $\left(\mathbf{f}(x,y=\mathrm{Y}^k)\right)_{c(k-1)+i} = \phi_i(x)$ for all $k\in\{1,2,\ldots,Y\}$.
 We term this parametrization of the feature function $\mathbf{f}(x,y)$ as the {\bf cross-product}
 parametrization, as there is one parameter for every pair of input--output characteristics.\footnote{The cross-product parameterization is the most common. 
 In fact, many authors define multiclass logistic regression in terms of this parameterization; e.g., \citet{hastie-09}. 
@@ -410,7 +410,7 @@ the label's frequency.\footnote{This is equivalent to an intercept term in the s
 Under the cross-product parametrization, this amounts to a percept that is 1 for all inputs.
 Bias parameters are sometimes exempted from regularization (see \Sref{sec:reg}).
 
-\subsection{Background labels and degrees of freedom}\label{sec:bg}
+\subsection{Background labels and identifiability}\label{sec:bg}
 
 Imagine a linear binary classifier whose only percept is a real value. 
 This classifier can be represented with only one feature/parameter, a threshold\footnote{In higher dimensions, the geometric boundary between classes is called a {\bf separating hyperplane}.}
@@ -418,12 +418,13 @@ below which the input is assigned to one class and above which it is assigned to
 One {\em could} model this decision with two features/parameters, one that fires when scoring the positive class 
 and one that fires for the negative class---but this is redundant because the negative-class feature value
 is a function of the positive-class feature value (they are mutually exclusive).
-The model is thus said to have one {\bf degree of freedom}.\footnote{\nss{how does this relate to {\bf overparametrization} and {\bf identifiability}?}}
-More generally, with $Y$ mutually exclusive labels and percept functions in $\mathbb{R}^c$, a (log-)linear classifier 
+The model is thus said to be {\bf non-identifiable}: given infinite training data, there would be multiple 
+weight vectors that could be learned while yielding identical predictions.
+More generally, with $Y$ mutually exclusive labels and percept functions in $\mathbb{R}^c$, a \mbox{(log-)linear} classifier 
 never requires more than $(Y-1) \times c$ features. 
 Implicitly, one of the labels---call this the {\bf background label}---can be assigned a score of 0 for all inputs, 
 and the non-background labels are scored relative to 0 (a positive score for an input means it outranks the background label; 
-a negative score means it is a worse fit). Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the classifier can then be rewritten as
+a negative score means it is a worse fit).\nss{how does this translate to logistic regression?} Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the classifier can then be rewritten as
 
 \begin{equation}\label{eq:classifier-bg}
 \hat{y} = h(x) = \argmax_{y\in\mathcal{Y}} \left\{\begin{array}{cl}
@@ -592,7 +593,7 @@ Many percepts and features, especially instantiations of open-ended templates, w
 These are said to be \textbf{unsupported}.
 Note that no unsupported {\em percept} will receive nonzero parameter weights during learning, 
 so only percepts attested in the training data (found during instantiation) 
-need to be included in the feature function (and accessed during recognition).\footnote{In the framework of (log-)linear 
+need to be included in the feature function (and accessed during recognition).\footnote{In the framework of \mbox{(log-)linear} 
 models addressed here, the only exception can be if a special regularizer is used that might push weights for unsupported percepts away from 0. 
 See \nss{TODO}.}
 To put this in perspective, instantiating a word template for every vocabulary item in the English language would be vastly ineffecient!
@@ -814,12 +815,16 @@ allowing us to rewrite the above as
 \sum_{(x,y)\in\mathcal{D}}{\left(-\boldsymbol{\theta}^\top\mathbf{f}(x,y)+\log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}}}\right)}
 \end{equation}
 A model with this loss will learn to produce a probability distribution over possible labels given an input.
+The loss's gradient with respect to parameter $j$ is
+\begin{equation}
+\nabla_j = \sum_{(x^*,y^*)\in\mathcal{D}}-f_j(x^*,y^*)+\underbrace{\sum_{y\in\mathcal{Y}} f_j(x^*,y)\frac{\exp{\boldsymbol{\theta}^{\top}\mathbf{f}(x^*,y)}}{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^{\top}\mathbf{f}(x^*,y')}}}}_{\mathbb{E}_{p_{\boldsymbol{\theta}}(y = \bullet \mid x=x^*)} f_j(x^*,\bullet)}
+\end{equation}
 Assuming the cross-product parametrization, 
 the loss's gradient with respect to the parameter associated with percept $i$ and label $y$ is
 \begin{equation}
-\nabla^y_i = \sum_{(x,y^*=y)\in\mathcal{D}}{\left(-\phi_i(x)+\frac{\phi_i(x)\exp{\theta^y_i\phi_i(x)}}{\sum_{y'\in\mathcal{Y}}{\exp{\theta^{y'}_i\phi_i(x)}}}\right)}
+\nabla^y_i = \left(\sum_{(x^*,y^*=y)\in\mathcal{D}}-\phi_i(x^*)\right)+\left(\sum_{(x^*,y^*)\in\mathcal{D}}{\underbrace{\phi_i(x^*)\frac{\exp{{\boldsymbol{\theta}^y}^{\top}\boldsymbol{\phi}(x^*)}}{\sum_{y'\in\mathcal{Y}}{\exp{{\boldsymbol{\theta}^{y'}}^{\top}\boldsymbol{\phi}(x^*)}}}}_{\mathbb{E}_{p_{\boldsymbol{\theta}}(y = \bullet \mid x=x^*)} \phi_i(x^*)}}\right)
 \end{equation}
-\nss{correct?}
+
 
 If the goal is to predict the single best label, the \textbf{max-margin loss} is a popular alternative:\footnote{The \textbf{cost function} assigns a nonnegative penalty to erroneous predictions during learning.
 \nss{relationship to margin?} 
@@ -831,7 +836,7 @@ A cost function can be incorporated into a log-linear learning objective as well
 \begin{equation}
 \textit{loss}_\text{margin}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{\left(- \boldsymbol{\theta}^\top\mathbf{f}(x,y) + \left(\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y') + \textit{cost}(y,y')}\right)\right)} 
 \end{equation}
-Its subgradient with respect to the $j$th parameter is:\footnote{Note that this is {\em negative} 
+A subgradient with respect to the $j$th parameter is:\footnote{Note that this is {\em negative} 
 for a feature that should have been active, but wasn't 
 (because the cost-augmented prediction is incorrect under the current parameters), 
 and {\em positive} for a feature that shouldn't have been active, but was under the current parameters.
@@ -842,7 +847,7 @@ The rationale for the cost function is to force the learner to make more errors 
 is too close to the score of the gold label (the \textbf{margin} between them is below threshold);
 consequently, for such ``close calls,'' the learner will make corrections to the parameters out of an abundance of caution.}
 \begin{equation}
-\nabla_j = -f_j(x,y) + f_j(x,\left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')+cost(y,y')}\right))
+\nabla_j = -f_j(x,y) + f_j(x,\left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')+\textit{cost}(y,y')}\right))
 \end{equation}
 This is cheaper to optimize than the log loss, because it does not require computing a partition function 
 (sum of scores for all labels) during learning.
@@ -882,6 +887,8 @@ These include:
   monitoring predictive accuracy on held-out development data and stopping once that accuracy fails to improve.
   \item \textbf{Averaging} (or \textbf{voting} among) models of different optimization ``ages'' \citep{freund-99}.
 \end{itemize}
+
+\nss{is there weirdness regularizing with max margin loss? just scaling?}
 
 \subsection{Optimization}
 
@@ -925,6 +932,27 @@ before making each update to the model weights.\footnote{\textbf{Mini-batch} opt
 
 \nss{impact measure}
 
+\nss{standardization (divide real-valued features by variance?)}
+
+\section{Advanced topics}
+
+\subsection{Feature induction}
+
+\nss{learning conjunctive features; learning low-dimensional representations}
+
+\subsection{Nonlinear models}
+
+\nss{kernels, \ldots}
+
+\subsection{Structured prediction}
+
+\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
+approximate inference; hard constraints/ILPs/dual decomp}
+
+\subsection{Multitask learning and domain adaptation}
+
+\nss{interesting things with features: frustratingly easy, Ando \& Zhang, \ldots}
+
 \section*{Acknowledgments}
 
 Thanks to the members of the \href{http://www.ark.cs.cmu.edu/}{Noah's ARK} lab at CMU 
@@ -933,11 +961,33 @@ for their valuable suggestions, discussions, and feedback.
 \appendix
 \section{Reference implementation}\label{ex}
 
-The following Python implementation demonstrates some of the feature handling techniques discussed in this document.
+We include a Python implementation to demonstrate some of the feature handling and learning techniques 
+discussed in this document.
 Source code and data can be downloaded from \textsmaller{\url{https://github.com/nschneid/features-note/}}.
+
+\subsection{Code}
 
 %caption={Example classifier implementation in Python.},
 \lstinputlisting{classifier.py}
+
+\subsection{Exercises}
+
+\begin{enumerate}
+  \item Write a function to print the learned feature weights, 
+  including human-readable feature names and the associated class label.
+  Which ones appear to be the most important?
+  Are any of the features redunant?
+  \item Implement the impact measure given in \Sref{sec:interp} 
+  to see which features make the biggest difference on the test set.
+  Are these the same as the features with strongest weights?
+  \item Experiment with adding new features (or improving existing ones).
+  How do they affect performance?
+  \item Experiment with tuning hyperparameters such as the number of training epochs
+  and the percept cutoff. How do those affect performance?
+  \item Implement the hinge loss cost function. Is it better than the perceptron?
+  \item Add a learning rate schedule such as AdaGrad. Does it lead to faster convergence?
+  \item {\em (Advanced)} Add support for logistic regression (the log loss) in training and decoding. 
+\end{enumerate}
 
 \bibliographystyle{plainnat}
 \bibliography{features}
