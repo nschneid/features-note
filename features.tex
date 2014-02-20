@@ -422,15 +422,16 @@ The model is thus said to be {\bf non-identifiable}: given infinite training dat
 weight vectors that could be learned while yielding identical predictions.
 More generally, with $Y$ mutually exclusive labels and percept functions in $\mathbb{R}^c$, a \mbox{(log-)linear} classifier 
 never requires more than $(Y-1) \times c$ features. 
-Implicitly, one of the labels---call this the {\bf background label}---can be assigned a score of 0 for all inputs, 
+Implicitly, one of the labels---call this the {\bf background label}---can be assigned a linear score of 0 for all inputs, 
 and the non-background labels are scored relative to 0 (a positive score for an input means it outranks the background label; 
-a negative score means it is a worse fit).\nss{how does this translate to logistic regression?} Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the classifier can then be rewritten as
-
+a negative score means it is a worse fit). 
+Designating the background label $\mathrm{Y}^{\textsc{bg}}$, the linear classifier can then be rewritten as
 \begin{equation}\label{eq:classifier-bg}
 \hat{y} = h(x) = \argmax_{y\in\mathcal{Y}} \left\{\begin{array}{cl}
 0 & \text{if }y=\mathrm{Y}^{\textsc{bg}} \\
 g_\params(x,y) & \text{o.w.}\end{array}\right\}
 \end{equation}
+With the log-linear scoring function, it is the dot product between the parameters and the features that is 0 for the background label.
 
 In practice, keeping parameters for all $Y$ labels (not making one of them a background label) 
 should not affect predictive performance, and may make the model more interpretable (\Sref{sec:interp}).
