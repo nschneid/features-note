@@ -730,7 +730,7 @@ meaning the loss function does not suffer from local optima.
 Convex and nonconvex optimization are entire subfields in their own right; 
 we address just a couple of popular convex loss functions and optimization methods here.
 
-\subsection{Na\"{i}ve Bayes and generative vs.~conditional models}
+\subsection{Na\"{i}ve Bayes and generative vs.~conditional models}\label{sec:naive}
 
 The probabilistic feature-based multiclass classification model family known as \textbf{na\"{i}ve Bayes} assumes:
 \begin{itemize}
@@ -824,7 +824,12 @@ the loss's gradient with respect to the parameter associated with percept $i$ an
 \begin{equation}
 \nabla^y_i = \left(\sum_{(x^*,y^*=y)\in\mathcal{D}}-\phi_i(x^*)\right)+\left(\sum_{(x^*,y^*)\in\mathcal{D}}{\underbrace{\phi_i(x^*)\frac{\exp{{\boldsymbol{\theta}^y}^{\top}\boldsymbol{\phi}(x^*)}}{\sum_{y'\in\mathcal{Y}}{\exp{{\boldsymbol{\theta}^{y'}}^{\top}\boldsymbol{\phi}(x^*)}}}}_{\mathbb{E}_{p_{\boldsymbol{\theta}}(y = \bullet \mid x=x^*)} \phi_i(x^*)}}\right)
 \end{equation}
-
+In both cases, the first term consists of \textbf{empirical feature counts}, 
+i.e., the sum of values for this feature over all seen instances; 
+it is constant given the labeled training data. The second term consists of \textbf{expected feature counts} 
+under the model, i.e., what the feature counts would be if the model were allowed to (softly) predict the labels 
+for training examples using the current parameters. The objective of fitting the data, then, 
+can be understood as adjusting the parameters so that the expected feature counts match the empirical feature counts.\footnote{\nss{refer to \citep{smith} for maxent interpretation}}
 
 If the goal is to predict the single best label, the \textbf{max-margin loss} is a popular alternative:\footnote{The \textbf{cost function} assigns a nonnegative penalty to erroneous predictions during learning.
 \nss{relationship to margin?} 
@@ -849,10 +854,13 @@ consequently, for such ``close calls,'' the learner will make corrections to the
 \begin{equation}
 \nabla_j = -f_j(x,y) + f_j(x,\left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')+\textit{cost}(y,y')}\right))
 \end{equation}
+Again, we see the empirical feature counts in the first term, and predicted feature counts in the second term.
 This is cheaper to optimize than the log loss, because it does not require computing a partition function 
 (sum of scores for all labels) during learning.
 Unlike a probabilistic loss, as long as the model assigns the best score to the correct label, 
 the hinge loss does not care about the other labels' scores relative to one another. 
+
+\nss{consider explaining connections to SVMs, max-margin networks}
 
 \subsection{Regularization}
 
@@ -945,6 +953,22 @@ before making each update to the model weights.\footnote{\textbf{Mini-batch} opt
 \nss{kernels; greedy search--based classifiers like decision trees?; \ldots}
 
 \subsection{Structured prediction}
+
+Some important unstructured classifiers vs.~structured models in NLP:
+
+\begin{center}\small
+\begin{tabular}{@{}>{\raggedright\bf}p{9em}>{\raggedright}p{13em}@{~~}>{\raggedright\arraybackslash}p{16em}@{}}
+& \multicolumn{1}{c}{Unstructured} & \multicolumn{1}{c}{Sequence} \\
+\hline
+generative, probabilistic & multinomial na\"{i}ve Bayes (\Sref{sec:naive}) & {\raggedright multinomial discrete hidden Markov model (HMM)} \\
+\hline
+conditional, probabilistic & log-linear classifiers (including logistic regression) & conditional random field (CRF)---globally normalized; 
+maximum entropy Markov model (MEMM)---locally normalized \\
+\hline
+conditional, non-probabilistic & linear classifiers trained with a max-margin loss (including perceptron) & structured perceptron \citep{collins-02} (sometimes cost-augmented) \\
+\hline
+\end{tabular}
+\end{center}
 
 \nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
 approximate inference; hard constraints/ILPs/dual decomp; combining generative and discriminative (Berg-Kirkpatrick)}
