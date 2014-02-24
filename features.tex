@@ -455,9 +455,11 @@ can be left out of the feature vector (\Sref{sec:bg})---with slight computationa
 
 \subsection{Scalar characteristics}
 
-\nss{binning and thresholding}
+\nss{binning and thresholding for integer- or real-valued features}
 
+\subsection{Scalar labels}
 
+\nss{discrete set of integer- or real-valued labels, ordinal or with meaningful distances}
 
 \subsection{Conjunctions and disjunctions}\label{sec:complex}
 
@@ -807,7 +809,7 @@ We do not have to worry about modeling how likely the input is a priori.
 Models learned discriminatively need not even be probabilistic (though some are).
 
 One popular discriminative loss function is the \textbf{conditional log loss}:
-\begin{equation}
+\begin{equation}\label{eq:logloss}
 \textit{loss}_\text{cond. log}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{-\log{p_{\boldsymbol{\theta}}(y \mid x)}}
 \end{equation}
 The log-linear scoring function \eref{eq:softmax} can be interpreted as a giving a log conditional probability, 
@@ -817,12 +819,12 @@ allowing us to rewrite the above as
 \end{equation}
 A model with this loss will learn to produce a probability distribution over possible labels given an input.
 The loss's gradient with respect to parameter $j$ is
-\begin{equation}
+\begin{equation}\label{eq:loggrad}
 \nabla_j = \sum_{(x^*,y^*)\in\mathcal{D}}-f_j(x^*,y^*)+\underbrace{\sum_{y\in\mathcal{Y}} f_j(x^*,y)\frac{\exp{\boldsymbol{\theta}^{\top}\mathbf{f}(x^*,y)}}{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^{\top}\mathbf{f}(x^*,y')}}}}_{\mathbb{E}_{p_{\boldsymbol{\theta}}(y = \bullet \mid x=x^*)} f_j(x^*,\bullet)}
 \end{equation}
 Assuming the cross-product parametrization, 
 the loss's gradient with respect to the parameter associated with percept $i$ and label $y$ is
-\begin{equation}
+\begin{equation}\label{eq:logperceptgrad}
 \nabla^y_i = \left(\sum_{(x^*,y^*=y)\in\mathcal{D}}-\phi_i(x^*)\right)+\left(\sum_{(x^*,y^*)\in\mathcal{D}}{\underbrace{\phi_i(x^*)\frac{\exp{{\boldsymbol{\theta}^y}^{\top}\boldsymbol{\phi}(x^*)}}{\sum_{y'\in\mathcal{Y}}{\exp{{\boldsymbol{\theta}^{y'}}^{\top}\boldsymbol{\phi}(x^*)}}}}_{\mathbb{E}_{p_{\boldsymbol{\theta}}(y = \bullet \mid x=x^*)} \phi_i(x^*)}}\right)
 \end{equation}
 In both cases, the first term consists of \textbf{empirical feature counts}, 
@@ -839,7 +841,7 @@ With no cost, it is the classic \textbf{perceptron} loss.
 All can be considered approximations to the discontinuous \textbf{0--1 loss},
 $\sum_{(x,y)\in\mathcal{D}}{\lsem \left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}\right)\neq y \rsem}$.\nss{right?}
 A cost function can be incorporated into a log-linear learning objective as well: this is called \textbf{softmax-margin} \citep{gimpel-10}.}
-\begin{equation}
+\begin{equation}\label{eq:marginloss}
 \textit{loss}_\text{margin}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{\left(- \boldsymbol{\theta}^\top\mathbf{f}(x,y) + \left(\max_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y') + \textit{cost}(y,y')}\right)\right)} 
 \end{equation}
 A subgradient with respect to the $j$th parameter is:\footnote{Note that this is {\em negative} 
@@ -852,14 +854,18 @@ feature---unless the cost-augmented predictor is correct, in which case it is 0.
 The rationale for the cost function is to force the learner to make more errors when the score of a competitor label 
 is too close to the score of the gold label (the \textbf{margin} between them is below threshold);
 consequently, for such ``close calls,'' the learner will make corrections to the parameters out of an abundance of caution.}
-\begin{equation}
-\nabla_j = -f_j(x,y) + f_j(x,\left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')+\textit{cost}(y,y')}\right))
+\begin{equation}\label{eq:margingrad}
+\nabla_j = \sum_{(x,y)\in\mathcal{D}} -f_j(x,y) + f_j(x,\left(\argmax_{y'}{\boldsymbol{\theta}^\top\mathbf{f}(x,y')+\textit{cost}(y,y')}\right))
 \end{equation}
 Again, we see the empirical feature counts in the first term, and predicted feature counts in the second term.
 This is cheaper to optimize than the log loss, because it does not require computing a partition function 
 (sum of scores for all labels) during learning.
 Unlike a probabilistic loss, as long as the model assigns the best score to the correct label, 
 the hinge loss does not care about the other labels' scores relative to one another. 
+
+The subgradients in \eref{eq:loggrad}, \eref{eq:logperceptgrad}, and \eref{eq:margingrad} 
+are summations over the training data instances, and as such can be decomposed 
+for the benefit of online methods treating one instance at a time (\Sref{sec:online}).
 
 \nss{consider explaining connections to SVMs, max-margin networks}
 
@@ -895,27 +901,53 @@ These include:
   \item Choosing the number of iterations of optimization by \textbf{early stopping}, i.e., 
   monitoring predictive accuracy on held-out development data and stopping once that accuracy fails to improve.
   \item \textbf{Averaging} (or \textbf{voting} among) models of different optimization ``ages'' \citep{freund-99}.
+  \item \textbf{Dropout} \citep{hinton-12,baldi-13}, a technique in which some percepts of each training instance are zeroed out 
+  at random. \citet{wager-13} describe a close connection between dropout and online learning with AdaGrad (see \fnref{fn:adaptive}).
 \end{itemize}
 
-\nss{is there weirdness regularizing with max margin loss? just scaling?}
+Procedural regularization techniques are most closely associated with the perceptron loss, 
+which is invariant to the scale of the weight vector---the perceptron only cares that the true label gets the highest score; 
+it does not care by how much---so a regularization term in the objective will have no effect with the perceptron.
+Objective regularization is standard for the log loss 
+and can also be used with a max-margin loss that has a nonzero cost function.\nss{right?}
 
 \subsection{Optimization}
+
+Having formulated a learning objective consisting of a loss function and, optionally, a regularization term, 
+we can exploit numerical optimization techniques for learning a set of parameters that minimize this function.
+Here we give a synopsis of a simple online learning algorithm that is widely used in NLP, 
+and discuss practical considerations required for making it fast.
 
 \nss{practical issues (e.g., fast score computation, sparse updates/averaging)}
 % (kinds of optimization: online vs. (mini)batch; gradient-based; margin-based vs. probabilistic; curriculum; joint/constrained/dual decomp)
 
 \nss{unsupported features/count thresholds; OOV handling}
 
-\subsubsection{Online optimization: SGD}
+\subsubsection{Online optimization: SGD}\label{sec:online}
 
 \textbf{Online} optimization algorithms pass through the training data and incrementally update 
 the weights to better fit the data.
+\textbf{Stochastic gradient descent} \citep[SGD;][]{sgd} makes one or more passes---called \textbf{epochs} or \textbf{iterations}---through the data. 
+At time $t \geq 1$, the learner receives an instance $(x^{(t)},y^{(t)})$ and performs an update of the form
+\begin{equation}
+\boldsymbol{\theta}^{(t)} \leftarrow \boldsymbol{\theta}^{(t-1)} + {\boldsymbol{\alpha}^{(t)}}^{\top} \boldsymbol{\nabla}(x^{(t)},y^{(t)};\boldsymbol{\theta}^{(t-1)})
+\end{equation}
+where $\boldsymbol{\nabla}(x,y; \boldsymbol{\theta})$ is the (sub)gradient under parameters $\boldsymbol{\theta}$ 
+of the learning objective with respect to the instance; the counter $t$ is incremented for every instance.
+$\boldsymbol{\alpha}$ is the \textbf{learning rate} or \textbf{step size}---it weights the new evidence 
+from the current instance against the cumulative evidence from past timesteps.
+The learning rate may be a constant scalar hyperparameter (e.g., $1$ or $.9$), may be scheduled to decrease over time, 
+or may be chosen adaptively using the gradient.\footnote{\label{fn:adaptive}Adaptive techniques include DCA \citep{martins-10} 
+and AdaGrad \citep{adagrad}; see also \url{http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf}.
+With DCA, $\boldsymbol{\alpha}^{(t)}$ is a scalar; with AdaGrad it is a vector (i.e., each parameter has its own learning rate).}
+The parameters are typically initialized to 0: $\boldsymbol{\theta}^{(0)} \leftarrow \mathbf{0}$.
 
-\subsubsection{Batch optimization}
-
-In constrast to \textbf{online} algorithms, 
-\textbf{batch} algorithms compute statistics over the full training data 
-before making each update to the model weights.\footnote{\textbf{Mini-batch} optimization is a middle ground in which several training instances are used for each update \citep[p.~175]{smith}.}
+Alternatives for optimizing the learning objective include 
+\textbf{batch} algorithms, which compute statistics over the full training data 
+before making each update to the model weights. 
+L-BFGS \citep{lbfgs} is a popular batch optimizer for which there are open source implementations.
+\textbf{Mini-batch} optimization is a middle ground in which several training instances 
+are used for each update \citep[p.~175]{smith}.
 
 \subsection{Feature induction}\label{sec:induction}
 
