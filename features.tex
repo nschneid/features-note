@@ -161,21 +161,43 @@
 \newcommand{\cost}{c}
 
 \usepackage{nameref}
-\newcommand{\Sref}[1]{\S\ref{#1}}
-\newcommand{\Snref}[1]{\S\ref{#1}:~\nameref{#1}}
-\newcommand{\fref}[1]{figure~\ref{#1}}
-\newcommand{\ffref}[2]{figures~\ref{#1} and~\ref{#2}}
-\newcommand{\Fref}[1]{Figure~\ref{#1}}
-\newcommand{\FFref}[2]{Figures~\ref{#1} and~\ref{#2}}
-\newcommand{\tref}[1]{table~\ref{#1}}
-\newcommand{\ttref}[2]{tables~\ref{#1} and~\ref{#2}}
-\newcommand{\Tref}[1]{Table~\ref{#1}}
-\newcommand{\aref}[1]{algorithm~\ref{#1}}
-\newcommand{\Aref}[1]{Algorithm~\ref{#1}}
-\newcommand{\appref}[1]{appendix~\ref{#1}}
-\newcommand{\Appref}[1]{Appendix~\ref{#1}}
-\newcommand{\fnref}[1]{footnote~\ref{#1}}
-\newcommand{\eref}[1]{\eqref{#1}}
+\usepackage{cleveref}
+
+% use \S for all references to all kinds of sections, and \P to paragraphs
+% (sadly, we cannot use the simpler \crefname{} macro because it would insert a space after the symbol)
+\crefformat{part}{\S#2#1#3}
+\crefformat{chapter}{\S#2#1#3}
+\crefformat{section}{\S#2#1#3}
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
+\crefformat{paragraph}{\P#2#1#3}
+\crefformat{subparagraph}{\P#2#1#3}
+\crefmultiformat{part}{\S\S#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+\crefmultiformat{chapter}{\S\S#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+\crefmultiformat{section}{\S\S#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+\crefmultiformat{subsection}{\S\S#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+\crefmultiformat{subsubsection}{\S\S#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+\crefmultiformat{paragraph}{\P\P#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+\crefmultiformat{subparagraph}{\P\P#2#1#3}{and~#2#1#3}{, #2#1#3}{, and~#2#1#3}
+% for \label[appsec]{...}
+\crefname{appsec}{appendix}{appendices}
+\Crefname{appsec}{Appendix}{Appendices}
+
+\renewcommand{\creflastconjunction}{, and\nobreakspace} % Oxford comma for lists
+
+\newcommand*{\Fullref}[1]{\hyperref[{#1}]{\Cref*{#1}: \nameref*{#1}}}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\cref*{#1}: \nameref{#1}}}
+% \newcommand{\fref}[1]{figure~\ref{#1}}
+% \newcommand{\ffref}[2]{figures~\ref{#1} and~\ref{#2}}
+% \newcommand{\Fref}[1]{Figure~\ref{#1}}
+% \newcommand{\FFref}[2]{Figures~\ref{#1} and~\ref{#2}}
+% \newcommand{\tref}[1]{table~\ref{#1}}
+% \newcommand{\ttref}[2]{tables~\ref{#1} and~\ref{#2}}
+% \newcommand{\Tref}[1]{Table~\ref{#1}}
+% \newcommand{\aref}[1]{algorithm~\ref{#1}}
+% \newcommand{\Aref}[1]{Algorithm~\ref{#1}}
+\newcommand{\fnref}[1]{\autoref{#1}} % don't use \cref{} due to bug in (now out-of-date) cleveref package w.r.t. footnotes
+%\newcommand{\eref}[1]{\eqref{#1}}
 
 % Space savers
 % From http://www.eng.cam.ac.uk/help/tpl/textprocessing/squeeze.html
@@ -249,24 +271,24 @@
 This note discusses concepts, terminology, algorithms, and implementation details pertaining to features in discrete statistical models.
 \end{abstract}
 
-We begin in {\bf \Snref{sec:prelim}} with a mathematical overview of the sorts of models 
+We begin in {\bf \fullref{sec:prelim}} with a mathematical overview of the sorts of models 
 that will be considered here.
 New terminology (especially: \textbf{percept} and \textbf{cross-product parametrization})
 and notation are explained.
 
 The next two sections address {\em feature design}.
-{\bf \Snref{sec:param}} elaborates on several mathematical issues of parametrization, 
+{\bf \fullref{sec:param}} elaborates on several mathematical issues of parametrization, 
 such as the treatment of features over categorical inputs.
-{\bf \Snref{sec:extraction}} offers an applied perspective on the development of feature functions---typically, 
+{\bf \fullref{sec:extraction}} offers an applied perspective on the development of feature functions---typically, 
 this combines description of abstract templates with data-driven generation and selection of specific features.
 
-Given a feature function, {\bf \Snref{sec:learning}} concerns {\em weight learning}, 
-focusing on supervised training. {\bf \Snref{sec:interp}} discusses the insights that can be gained 
+Given a feature function, {\bf \fullref{sec:learning}} concerns {\em weight learning}, 
+focusing on supervised training. {\bf \fullref{sec:interp}} discusses the insights that can be gained 
 from examining learned model weights. 
 
 To make the ideas in this document more concrete, 
 a Python reference implementation of feature extraction and weight learning
-appears in {\bf \appref{ex}}.
+appears in {\bf \cref{ex}}.
 
 \section{Preliminaries}\label{sec:prelim}
 
@@ -337,7 +359,7 @@ which depends on both the input and the output.\nss{manning \& schuetze p. 591 m
 $\boldsymbol{\phi}(x)$---a percept being a characteristic of the input only.
 
 Most commonly, there is one parameter for every pairing of percept with a label.\footnote{We assume 
-for now that there is only one characteristic of each {\em output}, the identity of the label. \Sref{sec:richer} relaxes this assumption.}
+for now that there is only one characteristic of each {\em output}, the identity of the label. \Cref{sec:richer} relaxes this assumption.}
 Formally, the multiclass feature function is then:
 %\nss{I am going for vector concatenation; there may be a better notation for this}
 \begin{equation}\label{eq:crossprod}
@@ -371,7 +393,7 @@ as a model over a fixed set of categorical outputs with the log-linear scoring f
 To simplify notation, we will let $\boldsymbol{\theta}^y$ denote the one of the $Y$ sections of $\boldsymbol{\theta}$ 
 corresponding to the label $y$. 
 %so $\left(\mathbf{g}_{\boldsymbol{\theta}}(x,y)\right)_j = \boldsymbol{\theta}^y_j \phi_j(x) = \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x)$.
-Then, combining equations \eref{eq:classifier}, \eref{eq:softmax}, and \eref{eq:crossprod}, 
+Then, combining equations \cref{eq:classifier,eq:softmax,eq:crossprod}, 
 the classification rule is
 \begin{equation}\label{eq:logistic}
 \hat{y} = \max_{y\in\mathcal{Y}} g_\params(x,y) = \max_{y\in\mathcal{Y}} \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x) - \log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^{y'\top} \boldsymbol{\phi}(x)}}}
@@ -408,7 +430,7 @@ for each label. The bias feature fires (i.e., has value 1) whenever
 the label is being scored; the weight that is learned will be indicative of 
 the label's frequency.\footnote{This is equivalent to an intercept term in the scoring function.} 
 Under the cross-product parametrization, this amounts to a percept that is 1 for all inputs.
-Bias parameters are sometimes exempted from regularization (see \Sref{sec:reg}).
+Bias parameters are sometimes exempted from regularization (see \cref{sec:reg}).
 
 \subsection{Background labels and identifiability}\label{sec:bg}
 
@@ -434,7 +456,7 @@ g_\params(x,y) & \text{o.w.}\end{array}\right\}
 With the log-linear scoring function, it is the dot product between the parameters and the features that is 0 for the background label.
 
 In practice, keeping parameters for all $Y$ labels (not making one of them a background label) 
-should not affect predictive performance, and may make the model more interpretable (\Sref{sec:interp}).
+should not affect predictive performance, and may make the model more interpretable (\cref{sec:interp}).
 But designating a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
 
 \subsection{Categorical characteristics}
@@ -445,13 +467,13 @@ nonzero parameters for both the ``false'' and ``true'' states, as these would be
 to have opposite values if learned from data (because when one fires the other is silent, and vice versa).
 In general, a characteristic with a closed set of $k$ possible categorical and mutually exclusive values 
 is encoded nonredundantly with $k-1$ binary percepts.\footnote{A percept taking two or more nonzero values has a scalar 
-interpretation under scoring functions such as \eref{eq:linear} and \eref{eq:softmax}. 
+interpretation under scoring functions such as \cref{eq:linear,eq:softmax}. 
 Hence the use of multiple binary percepts for categorical characteristics.}
 Mathematically, there is no harm in representing all $k$ categories, 
 and depending on the semantics of the characteristic, it might make the model more interpretable.
 But when a characteristic has an obvious {\bf default} category (such as ``not applicable''),
 it can safely be left out of the percept vector---much like features for a background label 
-can be left out of the feature vector (\Sref{sec:bg})---with slight computational savings.
+can be left out of the feature vector (\cref{sec:bg})---with slight computational savings.
 
 \subsection{Scalar characteristics}
 
@@ -486,7 +508,7 @@ to be learned for \textit{favor} and \textit{favour}, these are ``tied'' togethe
 
 Mathematically, complex percepts are treated just like atomic percepts, 
 but the distinction can be exploited in implementation.
-Feature induction (\Sref{sec:induction}) seeks to discover conjunctions or disjunctions of 
+Feature induction (\cref{sec:induction}) seeks to discover conjunctions or disjunctions of 
 existing features/percepts that improve the discriminating power of the model.
 
 
@@ -522,14 +544,14 @@ is unusual and not anticipated by many implementations.
 
 This section describes how large feature functions are designed in practice
 so as to harness the mathematical machinery described above.
-Margin notes link to relevant portions of the reference implementation (\appref{ex}).
+Margin notes link to relevant portions of the reference implementation (\cref{ex}).
 
 The process of encoding \marginpar{\small \hyperref[lst:56]{$\rightarrow$~\textsmaller{\texttt{extract()}}}}
 each data point as percepts\slash features is called \textbf{extraction}.
 As discussed below, the programmer often specifies abstract \textbf{templates} 
 to be instantiated (filled in) in a data-driven fashion
 using the same dataset on which parameter weights will be learned, 
-i.e., the \textbf{training data}. (Weight learning is discussed in \Sref{sec:learning}.)
+i.e., the \textbf{training data}. (Weight learning is discussed in \cref{sec:learning}.)
 When handling features, a variety of implementation techniques 
 are available to make effective use of runtime and memory resources.
 
@@ -634,7 +656,7 @@ if most weights will be nonzero (that is, unless the model enforces sparsity).
 Features should be indexed to integers so weights can be stored in an array for fast dot product computation.
 \begin{itemize}
 \item \textbf{Implicit feature indexing.} \marginpar{\small \hyperref[lst:66]{$\rightarrow$~\textsmaller{\texttt{feature\_index()}}}}
-With the cross-product parametrization \eref{eq:crossprod}, 
+With the cross-product parametrization, \cref{eq:crossprod}, 
 feature indices should be computed on the fly.
 First number the labels, 
 and map percept names to integers (by storing an explicit mapping to unique indices, or by hashing).
@@ -642,11 +664,11 @@ The weight vector can then be organized such that the feature index
 is a simple function of the percept and label indices.
 \end{itemize}
 
-\item Choose a \textbf{background label} (\Sref{sec:bg}), 
+\item Choose a \textbf{background label} (\cref{sec:bg}), 
 \marginpar{\small \hyperref[lst:74]{$\rightarrow$~\textsmaller{\texttt{labels[-1]}}}}
 and\slash or apply a percept or feature \textbf{cutoff} 
 \marginpar{\small \hyperref[lst:34]{$\rightarrow$~\textsmaller{\texttt{percept\_cutoff}}}}
-such as removing unsupported features (\Sref{sec:inst}), 
+such as removing unsupported features (\cref{sec:inst}), 
 in order to limit the dimensionality of the feature function.
 It is worth experimenting with a few alternatives, because cutoffs---especially 
 in combination with a background label\footnote{Consider a percept $\phi$ observed frequently in the training
@@ -756,10 +778,10 @@ By Bayes' rule, the classifier under such a model is
 \hat{y} = h(x) &=& \argmax_y{p(y \mid x)} = \argmax_y{p(x,y)} \\
                &=& \argmax_y{p(y)\prod_i{p_i(\phi_i(x) \mid y)}}
 \end{eqnarray}
-This is a special case of a classifier using the linear scoring function \eref{eq:linear}, 
+This is a special case of a classifier using the linear scoring function, \cref{eq:linear}, 
 where parameters are log probabilities: $\theta^y_i = \log{p_i(\phi_i(x) \mid y)}$ for non-bias percepts ($i>0$), and 
 $\theta^y_0 = \log{p(y)}$ for the bias percept, so $g_{\boldsymbol{\theta}}(x,y)=\log{p(x,y)}$.\footnote{Because under these assumptions, 
-the linear scoring function computes a log probability, the normalization in the log-linear scoring function \eref{eq:softmax} would be redundant.}
+the linear scoring function computes a log probability, the normalization in the log-linear scoring function of \cref{eq:softmax} would be redundant.}
 
 The most popular flavor is \textbf{multinomial} na\"{i}ve Bayes, in which the 
 percepts are binary (or categorical), and 
@@ -812,7 +834,7 @@ One popular discriminative loss function is the \textbf{conditional log loss}:
 \begin{equation}\label{eq:logloss}
 \textit{loss}_\text{cond. log}(\mathcal{D}; \boldsymbol{\theta}) = \sum_{(x,y)\in\mathcal{D}}{-\log{p_{\boldsymbol{\theta}}(y \mid x)}}
 \end{equation}
-The log-linear scoring function \eref{eq:softmax} can be interpreted as a giving a log conditional probability, 
+The log-linear scoring function, \cref{eq:softmax}, can be interpreted as a giving a log conditional probability, 
 allowing us to rewrite the above as 
 \begin{equation}
 \sum_{(x,y)\in\mathcal{D}}{\left(-\boldsymbol{\theta}^\top\mathbf{f}(x,y)+\log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^\top\mathbf{f}(x,y')}}}\right)}
@@ -863,9 +885,9 @@ This is cheaper to optimize than the log loss, because it does not require compu
 Unlike a probabilistic loss, as long as the model assigns the best score to the correct label, 
 the hinge loss does not care about the other labels' scores relative to one another. 
 
-The subgradients in \eref{eq:loggrad}, \eref{eq:logperceptgrad}, and \eref{eq:margingrad} 
+The subgradients in \cref{eq:loggrad,eq:logperceptgrad,eq:margingrad} 
 are summations over the training data instances, and as such can be decomposed 
-for the benefit of online methods treating one instance at a time (\Sref{sec:online}).
+for the benefit of online methods treating one instance at a time (\cref{sec:online}).
 
 \nss{consider explaining connections to SVMs, max-margin networks}
 
@@ -993,7 +1015,7 @@ Some important unstructured classifiers vs.~structured models in NLP:
 \begin{tabular}{@{}>{\raggedright\bf}p{9em}>{\raggedright}p{13em}@{~~}>{\raggedright\arraybackslash}p{16em}@{}}
 & \multicolumn{1}{c}{Unstructured} & \multicolumn{1}{c}{Sequence} \\
 \hline
-generative, probabilistic & multinomial na\"{i}ve Bayes (\Sref{sec:naive}) & {\raggedright multinomial discrete hidden Markov model (HMM)} \\
+generative, probabilistic & multinomial na\"{i}ve Bayes (\cref{sec:naive}) & {\raggedright multinomial discrete hidden Markov model (HMM)} \\
 \hline
 conditional, probabilistic & log-linear classifiers (including logistic regression) & conditional random field (CRF)---globally normalized; 
 maximum entropy Markov model (MEMM)---locally normalized \\
@@ -1020,7 +1042,7 @@ Thanks to the members of the \href{http://www.ark.cs.cmu.edu/}{Noah's ARK} lab a
 for their valuable suggestions, discussions, and feedback.
 
 \appendix
-\section{Reference implementation}\label{ex}
+\section{Reference implementation}\label[appsec]{ex}
 
 We include a Python implementation to demonstrate some of the feature handling and learning techniques 
 discussed in this document.
@@ -1038,7 +1060,7 @@ Source code and data can be downloaded from \textsmaller{\url{https://github.com
   including human-readable feature names and the associated class label.
   Which ones appear to be the most important?
   Are any of the features redunant?
-  \item Implement the impact measure given in \Sref{sec:interp} 
+  \item Implement the impact measure given in \cref{sec:interp} 
   to see which features make the biggest difference on the test set.
   Are these the same as the features with strongest weights?
   \item Experiment with adding new features (or improving existing ones).
