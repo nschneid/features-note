@@ -891,7 +891,7 @@ for the benefit of online methods treating one instance at a time (\cref{sec:onl
 
 \nss{consider explaining connections to SVMs, max-margin networks}
 
-\subsection{Regularization}
+\subsection{Regularization}\label{sec:reg}
 
 To prevent the learner from getting carried away in fitting the training data, 
 it is common practice to use the learning objective
@@ -908,11 +908,13 @@ and the value tried that gives the model best predictive accuracy on a held-out 
 
 The most popular flavors are $L_2$ (or \textbf{ridge}) and $L_1$ (or \textbf{Lasso}) regularization:\footnote{These can also be combined in what is known as \textbf{elastic net} regularization.}
 \begin{eqnarray}
-R_{L_2}(\boldsymbol{\theta}) = \tfrac{1}{2} ||\boldsymbol{\theta}||^2_2 = \sum_{j=1}^d \theta^2_j &&
+R_{L_2}(\boldsymbol{\theta}) = \tfrac{1}{2} ||\boldsymbol{\theta}||^2_2 = \tfrac{1}{2} \sum_{j=1}^d \theta^2_j &&
 R_{L_1}(\boldsymbol{\theta}) = ||\boldsymbol{\theta}||_1 = \sum_{j=1}^d |\theta_j|
 \end{eqnarray}
 Both are convex, so with a convex loss function, the full learning objective will remain convex.
-$L_1$~regularization encourages many parameters to go to 0, but is not a smooth function, 
+$\partial R_{L_2} / \partial \theta_j = \theta_j$, 
+so the $L_2$ penalty is trivial to implement.
+$L_1$~regularization encourages many parameters to go to 0, but the function is not differentiable, 
 and as such requires special optimization techniques.
 $L_2$~regularization tends to work at least as well as $L_1$ in terms of producing models
 that are accurate predictors.
@@ -932,6 +934,29 @@ which is invariant to the scale of the weight vector---the perceptron only cares
 it does not care by how much---so a regularization term in the objective will have no effect with the perceptron.
 Objective regularization is standard for the log loss 
 and can also be used with a max-margin loss that has a nonzero cost function.\nss{right?}
+
+\subsection{Sparsity}\label{sec:sparsity}
+
+When talking about feature-rich models, the word \textbf{sparse} can mean one of three things:
+\begin{itemize}
+  \item \textbf{data sparseness}: Characterizing a dataset as ``sparse'' is a fancy way of saying there is not as much of it as we would like 
+  given the complexity of what we are trying to learn.
+  \item \textbf{vector sparsity}: We say that a vector (or matrix) is ``sparse'' if it has few nonzero components.
+  Formally, some vector $\mathbf{v}$ is said to be sparse if $||\mathbf{v}||_0 \ll |\mathbf{v}|$.\footnote{$||\mathbf{v}||_0$, the $\ell_0$-norm, counts the number of nonzero components of $\mathbf{v}$.} 
+  This can manifest itself in two ways in our models:
+  \begin{itemize}
+  	\item \textbf{weight sparsity}: When learning weights for a large number of parameters, it may be desirable to encourage
+  many or most of them to be zero on the hypothesis that a relatively small number of parameters are actually 
+  relevant to the task. 
+  $L_1$ regularization (\cref{sec:reg}) is one technique for biasing the learner in favor of models where 
+  $||\boldsymbol{\theta}||_0 \ll |\boldsymbol{\theta}|$.\footnote{In fact, the $\ell_1$-norm $||\boldsymbol{\theta}||_1$ can be viewed as an approximation of the $\ell_0$-norm, 
+  which is more difficult to optimize.}
+	  \item \textbf{instance sparsity}: With language data, it is usually the case that the percept\slash feature 
+  vector for a particular data instance has very few active components relative to the dimensionality.
+  This is because string vocabularies are large, resulting in many (mostly individually rare) binary features.  
+  As we will see in \cref{sec:impllearning}, exploiting instance sparsity is crucial to implementing learning efficiently.
+  \end{itemize} 
+\end{itemize}
 
 \subsection{Optimization}
 
@@ -971,7 +996,7 @@ L-BFGS \citep{lbfgs} is a popular batch optimizer for which there are open sourc
 \textbf{Mini-batch} optimization is a middle ground in which several training instances 
 are used for each update \citep[p.~175]{smith}.
 
-\subsubsection{Implementing learning}
+\subsubsection{Implementing learning}\label{sec:impllearning}
 
 Now we consider (computational) optimizations for (parameter) optimization.
 
