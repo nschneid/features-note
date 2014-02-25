@@ -971,22 +971,17 @@ L-BFGS \citep{lbfgs} is a popular batch optimizer for which there are open sourc
 \textbf{Mini-batch} optimization is a middle ground in which several training instances 
 are used for each update \citep[p.~175]{smith}.
 
-\subsection{Feature induction}\label{sec:induction}
+\subsubsection{Implementing learning}
 
-\subsection{Regularization}\label{sec:reg}
-
-\nss{regularization: simple approaches, sparsity, groups, graph-based, priors}
-
-\nss{pointers to un/semi-supervised approaches}
-% - semi-supervised learning/domain adaptation: posterior regularization; active learning; transfer learning
-% - unsupervised learning: generative better?; Berg-Kirkpatrick
-
-\subsection{Implementing learning}
+Now we consider (computational) optimizations for (parameter) optimization.
 
 \nss{implementation issues: store features in memory/disk?; sparse updates}
-\subsubsection{Optimizations for learning}
+
 % runtime savings during learning
 % - cache the extracted percepts for each instance so they do not have to be recomputed on each iteration
+
+
+
 
 
 \section{Interpretation}\label{sec:interp}
@@ -999,7 +994,7 @@ are used for each update \citep[p.~175]{smith}.
 
 \section{Advanced topics}
 
-\subsection{Feature induction}
+\subsection{Feature induction}\label{sec:induction}
 
 \nss{learning conjunctive features; learning low-dimensional representations}
 
@@ -1034,7 +1029,30 @@ approximate inference; hard constraints/ILPs/dual decomp; combining generative a
 
 \subsection{Unsupervised and semisupervised learning}
 
-\nss{\ldots this exists\ldots}
+\nss{pointers to un/semi-supervised approaches, graph-based}
+% - semi-supervised learning/domain adaptation: posterior regularization; active learning; transfer learning
+% - unsupervised learning: generative better?; Berg-Kirkpatrick
+
+The framework of \textbf{posterior regularization} \citep{ganchev-10} 
+allows declarative assumptions about good analyses (e.g., in part-of-speech tagging, ``every sentence should contain at least one verb'') 
+to be encoded as expectation contraints in a regularizer that uses unlabeled data.
+In this framework, the model features are supplemented with special features for the constraints.
+Both kinds of features are required to factor locally for tractability of inference.
+
+Globally-normalized conditional models are often more effective than generative models in supervised settings 
+due to their ability to incorporate rich overlapping features, but they are difficult to learn unsupervised.
+One tractable solution is \textbf{contrastive estimation}, 
+which uses an approximate partition function derived from quasi-negative evidence \citep{smith-05}. 
+An alternative approach to unsupervised modeling is to parametrize a structured generative model (such as an HMM) 
+with locally normalized, feature-rich log-linear models for some of its component distributions. 
+\citet{berg-kirkpatrick-10} offer learning techniques for such ``generative-conditional hybrid'' models 
+and obtain state-of-the-art performance on several tasks.
+
+\subsection{Structured sparsity}
+
+\nss{group lasso, etc.}
+
+
 
 \section*{Acknowledgments}
 
