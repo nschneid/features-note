@@ -974,10 +974,10 @@ and discuss practical considerations required for making it fast.
 
 \textbf{Online} optimization algorithms pass through the training data and incrementally update 
 the weights to better fit the data.
-\textbf{Stochastic gradient descent} \citep[SGD;][]{sgd} makes one or more passes---called \textbf{epochs} or \textbf{iterations}---through the data. 
+\textbf{Stochastic (sub)gradient descent} \citep[SGD;][]{sgd} makes one or more passes---called \textbf{epochs} or \textbf{iterations}---through the data. 
 At time $t \geq 1$, the learner receives an instance $(x^{(t)},y^{(t)})$ and performs an update of the form
-\begin{equation}
-\boldsymbol{\theta}^{(t)} \leftarrow \boldsymbol{\theta}^{(t-1)} + {\boldsymbol{\alpha}^{(t)}}^{\top} \boldsymbol{\nabla}(x^{(t)},y^{(t)};\boldsymbol{\theta}^{(t-1)})
+\begin{equation}\label{eq:sgd}
+\boldsymbol{\theta}^{(t)} \leftarrow \boldsymbol{\theta}^{(t-1)} - {\boldsymbol{\alpha}^{(t)}}^{\top} \boldsymbol{\nabla}(x^{(t)},y^{(t)};\boldsymbol{\theta}^{(t-1)})
 \end{equation}
 where $\boldsymbol{\nabla}(x,y; \boldsymbol{\theta})$ is the (sub)gradient under parameters $\boldsymbol{\theta}$ 
 of the learning objective with respect to the instance; the counter $t$ is incremented for every instance.
@@ -1000,7 +1000,62 @@ are used for each update \citep[p.~175]{smith}.
 
 Now we consider (computational) optimizations for (parameter) optimization.
 
-\nss{implementation issues: store features in memory/disk?; sparse updates}
+\paragraph{Caching training data percepts/features.}
+When learning requires multiple passes over the training data,
+it is worth caching each instance's extracted features and gold label rather than 
+waste time on repeated feature extraction (assuming, of course, that the feature function itself is not changing).
+If the feature indices can be computed easily from percept indices \nss{see above}, 
+then only the percept indices need to be cached.
+The cache can be stored in memory, or if the training set is too large, on disk via a streaming serialization library.
+
+\paragraph{Sparse online updates.}
+The SGD update is concisely formulated in terms of vectors in \cref{eq:sgd}.
+This can be implemented by looping over vector components (coordinates):
+\begin{align}\label{eq:densesgd}
+\textrm{Dense SGD:} & & \forall 1\leq j\leq d,~~~ \theta^{(t)}_j \leftarrow \theta^{(t-1)}_j - \alpha^{(t)}_j \nabla_j(x^{(t)},y^{(t)};\boldsymbol{\theta}^{(t-1)})
+\end{align}
+With high-dimensional data, this is extremely slow (it is an inner loop in learning); 
+fortunately, with instance sparsity (\cref{sec:sparsity}), it is usually unnecessary.
+Consider first an unregularized learning objective, whose (sub)gradient consists entirely of 
+the (sub)gradient of the loss. This will be nonzero only for active features, as is apparent from \cref{eq:loggrad,eq:margingrad}.
+Therefore, the unregularized update looks like:
+\begin{align}\label{eq:densesgd}
+\textrm{Sparse SGD:} & & \forall j: f_j(x^{(t)},y^{(t)})\neq 0,~~~ \theta_j \leftarrow \theta_j - \alpha^{(t)}_j \nabla_j(x^{(t)},y^{(t)};\boldsymbol{\theta})
+\end{align}
+(dropping the time superscripts on the parameters to imply that they keep their previous value unless updated).
+This will be much faster provided that the active features are stored in a sparse data structure (such as a map).
+
+Regularization adds a wrinkle because it may affect all parameters.
+Luckily, most of the regularization techniques discussed in \cref{sec:reg} are compatible with sparse online updates.
+Dropout, by definition, only affects active features, so it is not an impediment. 
+And for two other techniques, the current instance's effect on weights for non-active features via the regularizer  
+can be factored out from its effects on weights for active features:
+
+\subparagraph{$L_2$ regularization.}
+\Citet{smola-11} notes that the $L_2$-regularized objective leads to updates of the form
+\begin{eqnarray*}
+\theta^{(t)}_j & \leftarrow & \theta^{(t-1)}_j - \alpha^{(t)}\lambda\theta^{(t-1)}_j - \alpha^{(t)}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)}) \\
+						& = & \hspace{1.25em}(1 - \alpha^{(t)}\lambda)\theta^{(t-1)}_j - \alpha^{(t)}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)})
+\end{eqnarray*}
+which can be factored for sparse updates by introducing a scaling factor $c$: 
+defining $\theta^{(t)}_j = c^{(t)}\tilde{\theta}^{(t)}_j$ and substituting for $\theta^{(t-1)}$ on the RHS of the above,
+\begin{eqnarray*}
+\theta^{(t)}_j & \leftarrow & 
+                  (1 - \alpha^{(t)}\lambda)c^{(t-1)}\tilde{\theta}^{(t-1)}_j - \alpha^{(t)}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)}) \\
+& = & \underbrace{(1 - \alpha^{(t)}\lambda)c^{(t-1)}}_{c^{(t)}\textrm{ update}}\underbrace{\left(\tilde{\theta}^{(t-1)}_j - \frac{\alpha^{(t)}}{(1 - \alpha^{(t)}\lambda)c^{(t-1)}}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)})\right)}_{\tilde{\theta}^{(t)}_j\textrm{ update}}
+\end{eqnarray*}
+This leads to the a procedure that simply updates $\tilde{\theta}_j$ and $c$; 
+the former need only account for active features in the current instance: 
+\begin{eqnarray}
+\tilde{\theta}_j & \leftarrow & \tilde{\theta}_j - \frac{\alpha^{(t)}}{(1 - \alpha^{(t)}\lambda)c}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)}) \\
+c & \leftarrow & (1 - \alpha^{(t)}\lambda)c
+\end{eqnarray}
+$c$ is initialized to 1 and $\tilde{\boldsymbol{\theta}}$ to $\mathbf{0}$.\nss{right?} 
+Whenever $c$ gets very small, to avoid underflow we rescale so that $\tilde{\boldsymbol{\theta}}=\boldsymbol{\theta}$: 
+$\forall 1\leq j\leq d,~ \tilde{\theta}_j \leftarrow c\tilde{\theta}_j$; then $c \leftarrow 1$. 
+This periodic rescaling is the only dense operation required.
+
+\subparagraph{Averaging.}
 
 % runtime savings during learning
 % - cache the extracted percepts for each instance so they do not have to be recomputed on each iteration
