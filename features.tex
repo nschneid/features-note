@@ -770,7 +770,7 @@ allows atomic parts of the percept to be reused.
 use a trie or a map with an efficient hash function.
 
   \item \textbf{Percept/feature hashing.} An extreme form of percept or feature indexing is to use a hash function to compute the index 
-(without having to consult a data structure).\footnote{See \citep{weinberger-09} and \url{http://en.wikipedia.org/wiki/Feature_hashing}.}
+(without having to consult a data structure).\footnote{See \citep{weinberger-09}, \citep{smola-10-hashing}, and \url{http://en.wikipedia.org/wiki/Feature_hashing}.}
 With a fast hash function, this reduces runtime overhead, 
 and if the names of the percepts\slash features are discarded following hashing, it saves memory as well.
 The downside is that hash values are not guaranteed to be unique; 
@@ -1092,7 +1092,7 @@ And for two other techniques, the current instance's effect on weights for non-a
 can be factored out from its effects on weights for active features:
 
 \subparagraph{$L_2$ regularization.}
-\Citet{smola-11} notes that the $L_2$-regularized objective leads to updates of the form
+\Citet{smola-10} notes that the $L_2$-regularized objective leads to updates of the form
 \begin{eqnarray*}
 \theta^{(t)}_j & \leftarrow & \theta^{(t-1)}_j - \alpha^{(t)}\lambda\theta^{(t-1)}_j - \alpha^{(t)}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)}) \\
 						& = & \hspace{1.25em}(1 - \alpha^{(t)}\lambda)\theta^{(t-1)}_j - \alpha^{(t)}\nabla_j\textit{loss}(\boldsymbol{\theta}; x^{(t)}, y^{(t)})
