@@ -1,10 +1,68 @@
 \PassOptionsToPackage{usenames}{color}
 \documentclass[11pt,letterpaper]{article}
-
+\usepackage{comment}
 \usepackage{relsize} % relative font sizes (e.g. \smaller). must precede ACL style
 %\usepackage{style/acl2012}
+
 \usepackage[linkcolor=blue]{hyperref}
+
 \usepackage[round]{natbib}
+\begin{comment}
+\usepackage[style=authoryear-comp,natbib=true,hyperref=true]{biblatex}
+
+% tell biblatex not to quote titles in the bibliography
+\DeclareFieldFormat{title}{#1} % don't italicize titles by default
+\DeclareFieldFormat[book]{title}{\mkbibemph{#1}\isdot} % but do italicize books
+\DeclareFieldFormat[article]{title}{#1\isdot}
+\DeclareFieldFormat[inbook]{title}{#1\isdot}
+\DeclareFieldFormat[incollection]{title}{#1\isdot}
+\DeclareFieldFormat[inproceedings]{title}{#1\isdot}
+\DeclareFieldFormat[patent]{title}{#1\isdot}
+\DeclareFieldFormat[thesis]{title}{#1\isdot}
+\DeclareFieldFormat[unpublished]{title}{#1\isdot}
+% ...and for articles, to use number(issue) instead of number.issue
+\renewbibmacro*{journal+issuetitle}{%
+  \usebibmacro{journal}%
+  \setunit*{\addspace}%
+  \iffieldundef{series}
+    {}
+    {\newunit
+     \printfield{series}%
+     \setunit{\addspace}}%
+  \printfield{volume}%
+%  \setunit*{\adddot}%
+  \printfield{number}%
+  \setunit{\addcomma\space}%
+  \printfield{eid}%
+  \setunit{\addspace}%
+  \usebibmacro{issue+date}%
+  \newunit\newblock
+  \usebibmacro{issue}%
+  \newunit}
+\DeclareFieldFormat[article]{number}{\mkbibparens{#1}}
+% use ``pages'' instead of ``pp.''
+\DefineBibliographyStrings{english}{%
+    pages  =  {pages} % for multiple page numbers
+}
+% but for articles, just use a colon
+\DeclareFieldFormat[article]{pages}{:#1} %TODO. check with LeCun citation
+% and don't put a colon after In
+\renewbibmacro*{in:}{%
+  \bibstring{in}%\addcolon
+  \setunit{\space}}
+
+\DeclareFieldFormat{label}{#1\isdot}
+\renewbibmacro*{year+labelyear}{%
+  \iffieldundef{year}
+    {}
+    {\printtext{%
+       \printfield{year}%
+       \printfield{labelyear}%
+       \setunit{\adddot}}}}
+
+\bibliography{features.bib}
+\end{comment}
+
 
 %\usepackage{times}
 %\usepackage{latexsym}
@@ -610,7 +668,7 @@ Feature extraction code has to be used for two tasks:
   \item \textbf{Recognition:} \marginpar{\small \hyperref[lst:129]{$\rightarrow$~\textit{line 129}}}
   Given the model's feature function, enumerate the active percepts\slash features and their values.
   This is performed for each instance during training\footnote{To avoid repeating extraction on the training data 
-during each iteration of learning, consider caching each instance's percepts\slash features (see \nss{TODO}).} and at test time.
+during each iteration of learning, consider caching each instance's percepts\slash features (see \cref{sec:impllearning}).} and at test time.
 \end{itemize}
 
 %\paragraph{Unsupported percepts and features.}
@@ -640,13 +698,13 @@ this will have little impact on accuracy but will make learning and classificati
 Extracting/accessing a large number of features can be a major performance bottleneck. 
 We discuss the efficiency tradeoffs of several feature handling optimizations.
 
-\subsubsection{Optimizations for both memory and runtime}
+\subsubsection{Optimizations for both memory and runtime}\label{sec:memrun}
 
 \begin{itemize}
 \item \textbf{Sparse vs.~dense data structures.} 
 \marginpar{\small \hyperref[lst:57]{$\rightarrow$~\textsmaller{\texttt{active\_percepts}}}}
 The number of active percepts\slash features for an instance 
-is generally much smaller than the number of parameters \nss{refer to sparsity discussion above}, 
+is generally much smaller than the number of parameters (instance sparsity, \cref{sec:sparsity}), 
 so a sparse data structure such as a map should be used rather than a length-$d$ vector.
 \marginpar{\small \hyperref[lst:102]{$\rightarrow$~\textsmaller{\texttt{weights}}}} 
 On the other hand, a dense vector/array data structure should be used for the parameter weights
@@ -998,13 +1056,15 @@ are used for each update \citep[p.~175]{smith}.
 
 \subsubsection{Implementing learning}\label{sec:impllearning}
 
-Now we consider (computational) optimizations for (parameter) optimization.
+Now we consider three (computational) optimizations for (parameter) optimization.
+All are quite simple to implement, though for the sake of completeness we will 
+show the mathematical underbellies of tricks two and three.
 
 \paragraph{Caching training data percepts/features.}
 When learning requires multiple passes over the training data,
 it is worth caching each instance's extracted features and gold label rather than 
 waste time on repeated feature extraction (assuming, of course, that the feature function itself is not changing).
-If the feature indices can be computed easily from percept indices \nss{see above}, 
+If the feature indices can be computed easily from percept indices (implicit feature indexing, \cref{sec:memrun}), 
 then only the percept indices need to be cached.
 The cache can be stored in memory, or if the training set is too large, on disk via a streaming serialization library.
 
@@ -1019,7 +1079,7 @@ fortunately, with instance sparsity (\cref{sec:sparsity}), it is usually unneces
 Consider first an unregularized learning objective, whose (sub)gradient consists entirely of 
 the (sub)gradient of the loss. This will be nonzero only for active features, as is apparent from \cref{eq:loggrad,eq:margingrad}.
 Therefore, the unregularized update looks like:
-\begin{align}\label{eq:densesgd}
+\begin{align}\label{eq:sparsesgd}
 \textrm{Sparse SGD:} & & \forall j: f_j(x^{(t)},y^{(t)})\neq 0,~~~ \theta_j \leftarrow \theta_j - \alpha^{(t)}_j \nabla_j(x^{(t)},y^{(t)};\boldsymbol{\theta})
 \end{align}
 (dropping the time superscripts on the parameters to imply that they keep their previous value unless updated).
@@ -1053,12 +1113,46 @@ c & \leftarrow & (1 - \alpha^{(t)}\lambda)c
 $c$ is initialized to 1 and $\tilde{\boldsymbol{\theta}}$ to $\mathbf{0}$.\nss{right?} 
 Whenever $c$ gets very small, to avoid underflow we rescale so that $\tilde{\boldsymbol{\theta}}=\boldsymbol{\theta}$: 
 $\forall 1\leq j\leq d,~ \tilde{\theta}_j \leftarrow c\tilde{\theta}_j$; then $c \leftarrow 1$. 
-This periodic rescaling is the only dense operation required.
+This periodic rescaling is the only dense operation required. $\diamonddiamond$
 
-\subparagraph{Averaging.}
+\subparagraph{Averaging.} This procedural regularization technique, especially popular for the perceptron, 
+uses as the final weight vector an average across timesteps of learning, including $t=0$ where all weights are 0:
+\begin{equation}\label{eq:averaging}
+\boldsymbol{\theta}^{(\text{final})} \leftarrow \tfrac{1}{T+1} \sum_{t=1}^{T} \boldsymbol{\theta}^{(t)}
+\end{equation} 
+Rather than store all $T$ weight vectors in order to average them, we could keep a running average. 
+Or better yet, we can enjoy sparse updates that keep sufficient information to compute the average, even though the duration 
+that a weight remains unchanged matters for averaging.
+The trick, as found in \citep[][p. 19]{daume-06}, is to maintain two vectors throughout learning---the 
+current weights, $\boldsymbol{\theta}$, and the sum of all timestamp-weighted update differences, $\bar{\boldsymbol{\theta}}$. 
+Initialize $\bar{\boldsymbol{\theta}}^{(0)} \leftarrow \mathbf{0}$. The update to each $\bar{\theta}_j$ is:
+\begin{equation}
+\bar{\theta}^{(t)}_j \leftarrow \bar{\theta}^{(t-1)}_j - t(\theta^{(t-1)}_j - \theta^{(t)}_j) \\
+\end{equation}
+This is sparse---provided, of course, that weights are updated only for active features. 
+Expanding this out gives a telescoping series:
+\begin{align*}
+\bar{\theta}^{(T)}_j &= \theta^{(1)}_j - 2\theta^{(1)}_j + 2\theta^{(2)}_j - \ldots + (T-1)\theta^{(T-1)}_j - T\theta^{(T-1)}_j + T\theta^{(T)}_j \\
+  &=  T\theta^{(T)}_j - \sum_{t=1}^{T-1} \theta^{(t)}_j
+\end{align*}
+The final weight vector is computed by combining $\bar{\boldsymbol{\theta}}^{(T)}$ and $\boldsymbol{\theta}^{(T)}$:
+for each parameter,
+\begin{align}
+\theta^{(\text{final})}_j &\leftarrow \theta^{(T)}_j - \tfrac{1}{T+1} \bar{\theta}^{(T)}_j \\
+&= \theta^{(T)}_j - \tfrac{1}{T+1} T\theta^{(T)}_j + \tfrac{1}{T+1} \sum_{t=1}^{T-1} \theta^{(t)}_j \nonumber \\
+&= \tfrac{1}{T+1} \sum_{t=1}^{T} \theta^{(t)}_j \nonumber 
+\end{align}
+giving us the equivalent of \cref{eq:averaging}, but with only one dense operation as opposed to $T$ of them! $\diamonddiamond$
 
-% runtime savings during learning
-% - cache the extracted percepts for each instance so they do not have to be recomputed on each iteration
+% At the end, $\bar{\boldsymbol{\theta}}$ will contain the sum of all weight vectors:
+% \begin{align*}
+% \bar{\theta}^{(\text{final})}_j &~=~ \sum_{t=1}^{T} t(\theta^{(t)}_j - \theta^{(t-1)}_j) 
+% 								 ~=~ \sum_{t=1}^{T} t\theta^{(t)}_j - t\theta^{(t-1)}_j 
+%                                  ~=~  \sum_{t=1}^{T} t\theta^{(t)}_j - \sum_{t=0}^{T-1} (t+1)\theta^{(t)}_j \\
+% %  \begin{array}\textsl{\smaller assuming} \\ \text{\smaller$\theta^{(t)}_j=0$}\end{array}    
+%   &~=~ T\theta^{(T)}_j + \sum_{t=1}^{T-1} (t-t-1)\theta^{(t)}_j 
+%                                  ~=~ \sum_{t=1}^{T} \theta^{(t)}_j 
+% \end{align*}
 
 
 
@@ -1171,8 +1265,10 @@ Source code and data can be downloaded from \textsmaller{\url{https://github.com
 \end{enumerate}
 
 \bibliographystyle{plainnat}
-\bibliography{features}
+\bibliography{features.bib}
 
+
+%\printbibliography[maxnames=99]
 
 
 \end{document}
