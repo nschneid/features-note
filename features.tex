@@ -103,7 +103,7 @@
 
 %\usepackage{mathptmx}	% txfonts
 \usepackage{fourier}
-\usepackage[scaled]{beramono}
+\usepackage[scaled=.8]{beramono}
 \usepackage[T1]{fontenc}
 \usepackage[utf8x]{inputenc}
 
@@ -698,6 +698,26 @@ this will have little impact on accuracy but will make learning and classificati
 Extracting/accessing a large number of features can be a major performance bottleneck. 
 We discuss the efficiency tradeoffs of several feature handling optimizations.
 
+\subsubsection{Data representation}\label{sec:datarep}
+
+There are several alternatives when storing data in files for input to a feature-based model. 
+Often it is useful to encode, for each data instance, just the sufficient pieces of information 
+for extracting features---these categories of information can be called \textbf{fields}. 
+For example, a parser may require input sentences to be preprocessed 
+to include each word's surface form, lemma, and part-of-speech (POS). 
+Features may then be extracted from one or more of these fields---e.g., the full surface form, 
+string prefixes and suffixes of the surface form, the lemma conjoined with the POS, etc. 
+The instances and their fields can be stored in a plain or gzipped text file 
+in a CoNLL-style format (with tab-separated fields, suitable for Unix command line transformations\footnote{In particular, 
+the \texttt{cut} and \texttt{paste} utilities for manipulating tab-separated columns. See \url{https://github.com/nschneid/unix-text-commands} for a synopsis.}), 
+XML, or JSON.
+
+For other purposes it may be desirable to cache extracted percepts or features in a file. 
+As these files can grow very large, a compressed data format may be desirable. 
+Frameworks such as \texttt{docrep} \citep[\url{https://github.com/schwa-lab/libschwa}]{dawborn-14}
+provide specialized APIs for creating and accessing structured data files for text processing. 
+See also \cref{sec:caching}.
+
 \subsubsection{Optimizations for both memory and runtime}\label{sec:memrun}
 
 \begin{itemize}
@@ -1060,13 +1080,14 @@ Now we consider three (computational) optimizations for (parameter) optimization
 All are quite simple to implement, though for the sake of completeness we will 
 show the mathematical underbellies of tricks two and three.
 
-\paragraph{Caching training data percepts/features.}
+\paragraph{Caching training data percepts/features.}\label{sec:caching}
 When learning requires multiple passes over the training data,
 it is worth caching each instance's extracted features and gold label rather than 
 waste time on repeated feature extraction (assuming, of course, that the feature function itself is not changing).
 If the feature indices can be computed easily from percept indices (implicit feature indexing, \cref{sec:memrun}), 
 then only the percept indices need to be cached.
 The cache can be stored in memory, or if the training set is too large, on disk via a streaming serialization library.
+See also \cref{sec:datarep}.
 
 \paragraph{Sparse online updates.}
 The SGD update is concisely formulated in terms of vectors in \cref{eq:sgd}.
