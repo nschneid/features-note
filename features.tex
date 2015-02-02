@@ -705,7 +705,7 @@ Often it is useful to encode, for each data instance, just the sufficient pieces
 for extracting features---these categories of information can be called \textbf{fields}. 
 For example, a parser may require input sentences to be preprocessed 
 to include each word's surface form, lemma, and part-of-speech (POS). 
-Features may then be extracted from one or more of these fields---e.g., the full surface form, 
+Percepts may then be extracted from one or more of these fields---e.g., the full surface form, 
 string prefixes and suffixes of the surface form, the lemma conjoined with the POS, etc. 
 The instances and their fields can be stored in a plain or gzipped text file 
 in a CoNLL-style format (with tab-separated fields, suitable for Unix command line transformations\footnote{In particular, 
@@ -1199,8 +1199,14 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 
 \subsection{Structured prediction}
 
-Some important unstructured classifiers vs.~structured models in NLP:
-
+This document has focused on models for unstructured classification, 
+but many of the ideas apply just as well in the case of \textbf{structured prediction}, 
+where an instance may be associated with multiple interdependent $y$ output variables, 
+requiring special algorithms for learning and prediction \citep{smith}.
+Certain families of structured models can be understood as generalizing certain unstructured classifiers.
+Especially important in NLP are Markov models for \textbf{sequences}. 
+Here are some correspondences between unstructured and sequence models:
+%
 \begin{center}\small
 \begin{tabular}{@{}>{\raggedright\bf}p{9em}>{\raggedright}p{13em}@{~~}>{\raggedright\arraybackslash}p{16em}@{}}
 & \multicolumn{1}{c}{Unstructured} & \multicolumn{1}{c}{Sequence} \\
@@ -1214,9 +1220,12 @@ conditional, non-probabilistic & linear classifiers trained with a max-margin lo
 \hline
 \end{tabular}
 \end{center}
+%
+Not all sequence modeling frameworks fit neatly in the above table: e.g., model families combining 
+generative and discriminative components \citep{berg-kirkpatrick-10,ammar-14}.
 
-\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
-approximate inference; hard constraints/ILPs/dual decomp; combining generative and discriminative (Berg-Kirkpatrick)}
+%\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
+%approximate inference; hard constraints/ILPs/dual decomp; combining generative and discriminative (Berg-Kirkpatrick)}
 
 \subsection{Multitask learning and domain adaptation}
 
