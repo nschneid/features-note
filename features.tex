@@ -334,6 +334,9 @@ that will be considered here.
 New terminology (especially: \textbf{percept} and \textbf{cross-product parametrization})
 and notation are explained.
 
+\nss{we do not address conceptual design/selection of features, or techniques for helping automate 
+the choice of features using the model's training data and/or auxiliary data 
+(dimensionality reduction, feature selection, structured sparsity, multitask learning).}
 The next two sections address {\em feature design}.
 {\bf \fullref{sec:param}} elaborates on several mathematical issues of parametrization, 
 such as the treatment of features over categorical inputs.
@@ -684,14 +687,28 @@ On the other hand, unsupported {\em features} for supported percepts---percept-l
 and can be slightly beneficial to the model by helping steer the classifier away from incorrect predictions. 
 
 %\paragraph{Cutoffs.}
-Sometimes a \textbf{cutoff} is used to remove infrequent percepts\slash features as measured by the training data.
+Sometimes a \textbf{cutoff} (threshold) is used to remove infrequent percepts\slash features as measured by the training data.
 Active percepts\slash features are counted during instantiation, and then any occurring fewer than $k$ times 
 are discarded from the feature function. (The usual no-unsupported-percepts rule amounts to $k=1$ for percepts, 
 though this can be made stricter; a no-unsupported-features policy would apply a $k\geq 1$ cutoff to individual features.)
 For sufficiently small (relative to the size of the training data) values of $k$, 
-this will have little impact on accuracy but will make learning and classification more efficient. 
+this will have little impact on accuracy but will make learning and classification more efficient.\footnote{\label{fn:hall-14}%
+Alternative techniques such as feature hashing (\cref{sec:hashing}) can be used to lessen the overhead of unsupported features. 
+For example, \citet{hall-14} hash only unsupported features, retaining the full inventory of supported features.}
 
-\nss{(more sophisticated) feature selection techniques?}
+\subsection{Selection}\label{sec:selection}
+
+\textbf{Feature selection} is the process of determining which features in a space of possible features 
+are worth including in a model, given resource limitations---%
+e.g., avoiding features that do not improve accuracy, or 
+adhering to a budget measured in terms of features or feature extraction time.
+A cutoff, as described above, is a simple but crude approach to feature selection based on training data counts.
+Feature selection can also be achieved by 
+removing or adding features based on how it affects the model's accuracy on held-out data, 
+or with an objective regularization penalty such as $L_1$ (\cref{sec:reg}).
+For more on feature selection algorithms in NLP, see \citet{collins-05} and citations therein.\footnote{Sophisticated 
+techniques recently proposed by \citet{he-13} and \citet{weiss-13} aim to optimize 
+the efficiency of feature computations in parsing.}
 
 \subsection{Implementing extraction and lookup}
 
@@ -783,7 +800,7 @@ allows atomic parts of the percept to be reused.
 (This may also improve runtime if string concatenation is expensive.)
 \end{itemize}
 
-\subsubsection{Optimizations for extraction runtime}
+\subsubsection{Optimizations for extraction runtime}\label{sec:hashing}
 
 \begin{itemize}
   \item \textbf{Indexing data structures.} For fast lookup with explicit indexing of strings or tuples, 
@@ -795,7 +812,8 @@ With a fast hash function, this reduces runtime overhead,
 and if the names of the percepts\slash features are discarded following hashing, it saves memory as well.
 The downside is that hash values are not guaranteed to be unique; 
 thus, there is a chance that multiple percepts\slash features will 
-be mapped to the same parameter, though occasional collisions should have minimal impact in practice. 
+be mapped to the same parameter, though occasional collisions should have minimal impact in practice.\footnote{Not all features 
+need to be hashed: see \fnref{fn:hall-14}.}
 
   \item \nss{parallelization?}
 \end{itemize}
@@ -1013,6 +1031,9 @@ it does not care by how much---so a regularization term in the objective will ha
 Objective regularization is standard for the log loss 
 and can also be used with a max-margin loss that has a nonzero cost function.\nss{right?}
 
+Forms of regularization that remove features (cause their weights to be zero) 
+are effectively performing feature selection (\cref{sec:selection}).
+
 \subsection{Sparsity}\label{sec:sparsity}
 
 When talking about feature-rich models, the word \textbf{sparse} can mean one of three things:
@@ -1197,7 +1218,12 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 
 \nss{kernels; greedy search--based classifiers like decision trees?; \ldots}
 
-\subsection{Structured prediction}
+\subsection{Structure in the parameter space: structured sparsity}
+
+\nss{group lasso, etc. Is L2 regularization ever done on groups?}
+
+
+\subsection{Structure in the output space (structured prediction)}
 
 This document has focused on models for unstructured classification, 
 but many of the ideas apply just as well in the case of \textbf{structured prediction}, 
@@ -1221,8 +1247,11 @@ conditional, non-probabilistic & linear classifiers trained with a max-margin lo
 \end{tabular}
 \end{center}
 %
-Not all sequence modeling frameworks fit neatly in the above table: e.g., model families combining 
-generative and discriminative components \citep{berg-kirkpatrick-10,ammar-14}.
+Not all sequence modeling frameworks fit neatly in the above table: e.g., some model families combine 
+generative and conditional components \citep{berg-kirkpatrick-10,ammar-14}.
+There are also, of course, approaches to predicting other kinds of structures, 
+such as trees \citep[in syntactic parsing: e.g.,][]{mcdonald-05} 
+and graphs \citep[in semantic parsing: e.g.,][]{flanigan-14}.
 
 %\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
 %approximate inference; hard constraints/ILPs/dual decomp; combining generative and discriminative (Berg-Kirkpatrick)}
@@ -1251,10 +1280,6 @@ An alternative approach to unsupervised modeling is to parametrize a structured 
 with locally normalized, feature-rich log-linear models for some of its component distributions. 
 \citet{berg-kirkpatrick-10} offer learning techniques for such ``generative-conditional hybrid'' models 
 and obtain state-of-the-art performance on several tasks.
-
-\subsection{Structured sparsity}
-
-\nss{group lasso, etc.}
 
 
 
