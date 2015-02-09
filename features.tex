@@ -569,7 +569,7 @@ to be learned for \textit{favor} and \textit{favour}, these are ``tied'' togethe
 
 Mathematically, complex percepts are treated just like atomic percepts, 
 but the distinction can be exploited in implementation.
-Feature induction (\cref{sec:induction}) seeks to discover conjunctions or disjunctions of 
+Feature induction (\cref{sec:selection}) seeks to discover conjunctions or disjunctions of 
 existing features/percepts that improve the discriminating power of the model.
 
 
@@ -703,9 +703,13 @@ are worth including in a model, given resource limitations---%
 e.g., avoiding features that do not improve accuracy, or 
 adhering to a budget measured in terms of features or feature extraction time.
 A cutoff, as described above, is a simple but crude approach to feature selection based on training data counts.
+Regularization (\cref{sec:reg}) techniques such as the $L_1$ penalty 
+remove some features (by forcing their weights to zero in training), 
+and thus can be viewed as selecting the remaining features.
 Feature selection can also be achieved by 
-removing or adding features based on how it affects the model's accuracy on held-out data, 
-or with an objective regularization penalty such as $L_1$ (\cref{sec:reg}).
+removing or adding features based on how they affect the model's accuracy on held-out data;
+in particular, \textbf{feature induction} algorithms augment an initial model 
+by selecting feature conjunctions and disjunctions (\cref{sec:complex}) where beneficial \citep{della_pietra-97,mccallum-03}.
 For more on feature selection algorithms in NLP, see \citet{collins-05} and citations therein.\footnote{Sophisticated 
 techniques recently proposed by \citet{he-13} and \citet{weiss-13} aim to optimize 
 the efficiency of feature computations in parsing.}
@@ -1210,13 +1214,11 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 
 \section{Advanced topics}
 
-\subsection{Feature induction}\label{sec:induction}
-
-\nss{learning conjunctive features; learning low-dimensional representations}
-
-\subsection{Nonlinear models}
-
-\nss{kernels; greedy search--based classifiers like decision trees?; \ldots}
+% \nss{learning low-dimensional representations}
+% 
+% \subsection{Nonlinear models}
+% 
+% \nss{kernels; greedy search--based classifiers like decision trees?; \ldots}
 
 \subsection{Structure in the parameter space: structured sparsity}
 
@@ -1253,6 +1255,13 @@ There are also, of course, approaches to predicting other kinds of structures,
 such as trees \citep[in syntactic parsing: e.g.,][]{mcdonald-05} 
 and graphs \citep[in semantic parsing: e.g.,][]{flanigan-14}.
 
+The semi-supervised framework of \textbf{posterior regularization} \citep{ganchev-10} 
+allows declarative assumptions about good analyses (e.g., in part-of-speech tagging, ``every sentence should contain at least one verb'') 
+to be encoded as expectation constraints in a regularizer that uses unlabeled data.
+In this framework, the model features are supplemented with special features for the constraints.
+Both kinds of features are required to factor locally for tractability of inference.
+
+
 %\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
 %approximate inference; hard constraints/ILPs/dual decomp; combining generative and discriminative (Berg-Kirkpatrick)}
 
@@ -1260,26 +1269,21 @@ and graphs \citep[in semantic parsing: e.g.,][]{flanigan-14}.
 
 \nss{interesting things with features: frustratingly easy, Ando \& Zhang, \ldots}
 
-\subsection{Unsupervised and semisupervised learning}
-
-\nss{pointers to un/semi-supervised approaches, graph-based}
-% - semi-supervised learning/domain adaptation: posterior regularization; active learning; transfer learning
-% - unsupervised learning: generative better?; Berg-Kirkpatrick
-
-The framework of \textbf{posterior regularization} \citep{ganchev-10} 
-allows declarative assumptions about good analyses (e.g., in part-of-speech tagging, ``every sentence should contain at least one verb'') 
-to be encoded as expectation contraints in a regularizer that uses unlabeled data.
-In this framework, the model features are supplemented with special features for the constraints.
-Both kinds of features are required to factor locally for tractability of inference.
-
-Globally-normalized conditional models are often more effective than generative models in supervised settings 
-due to their ability to incorporate rich overlapping features, but they are difficult to learn unsupervised.
-One tractable solution is \textbf{contrastive estimation}, 
-which uses an approximate partition function derived from quasi-negative evidence \citep{smith-05}. 
-An alternative approach to unsupervised modeling is to parametrize a structured generative model (such as an HMM) 
-with locally normalized, feature-rich log-linear models for some of its component distributions. 
-\citet{berg-kirkpatrick-10} offer learning techniques for such ``generative-conditional hybrid'' models 
-and obtain state-of-the-art performance on several tasks.
+% \subsection{Unsupervised and semisupervised learning}
+% 
+% \nss{pointers to un/semi-supervised approaches, graph-based}
+% % - semi-supervised learning/domain adaptation: posterior regularization; active learning; transfer learning
+% % - unsupervised learning: generative better?; Berg-Kirkpatrick
+% 
+% 
+% Globally-normalized conditional models are often more effective than generative models in supervised settings 
+% due to their ability to incorporate rich overlapping features, but they are difficult to learn unsupervised.
+% One tractable solution is \textbf{contrastive estimation}, 
+% which uses an approximate partition function derived from quasi-negative evidence \citep{smith-05}. 
+% An alternative approach to unsupervised modeling is to parametrize a structured generative model (such as an HMM) 
+% with locally normalized, feature-rich log-linear models for some of its component distributions. 
+% \citet{berg-kirkpatrick-10} offer learning techniques for such ``generative-conditional hybrid'' models 
+% and obtain state-of-the-art performance on several tasks.
 
 
 
