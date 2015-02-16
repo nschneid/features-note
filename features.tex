@@ -1220,6 +1220,35 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 % 
 % \nss{kernels; greedy search--based classifiers like decision trees?; \ldots}
 
+\subsection{Structure in the sample distribution: domain adaptation}
+
+Standard supervised learning techniques for models such as the ones introduced above 
+assume that the model will be asked to make predictions on test examples 
+that are drawn from the same distribution as the training examples. 
+When this is wildly violated---when test examples are somehow ``too different'' 
+from the training examples---predictive accuracy can suffer greatly.
+
+In practice, however, it is desirable to make predictions about a sample 
+from a distribution that is known to differ markedly from the distribution 
+of (most of) the training examples. For example, NLP with linguistic annotations 
+frequently faces this problem when attempting to make predictions about 
+language in genres for which few annotations are available. 
+\textbf{Domain adaptation} (DA) techniques have been developed to help models adjust  
+to data unlike (most of) the data points seen at training time.
+A typical paradigm is that the (semi-)supervised learner knows about two domains---a 
+\textbf{source domain} (e.g., news text) in which annotated instances are abundant, and 
+a \textbf{target domain} (e.g., social media text) with no more than a small number of annotated instances. 
+The model is then tested on held-out examples from the target domain. 
+
+Some DA methods are designed to leverage large amounts of \emph{unlabeled} instances 
+in the target domain \citep{sogaard-13}; others are intended for situations with small quantities of \emph{labeled} 
+target-domain instances. A notable member of the second category 
+is the ``frustratingly easy'' method of \citet{daume-07}, 
+which consists of a simple enrichment of the feature space:
+
+
+\nss{frustratingly easy}
+
 \subsection{Structure in the parameter space: structured sparsity}
 
 \nss{group lasso, etc. Is L2 regularization ever done on groups?}
@@ -1231,6 +1260,30 @@ This document has focused on models for unstructured classification,
 but many of the ideas apply just as well in the case of \textbf{structured prediction}, 
 where an instance may be associated with multiple interdependent $y$ output variables, 
 requiring special algorithms for learning and prediction \citep{smith}.
+Typically it is necessary to \emph{search} over possible structured outputs 
+as enumerating them exhaustively would be intractable. 
+
+\paragraph{Local vs.~nonlocal features.} 
+For this search to be exact, the decoding objective being optimized 
+needs to decompose (factorize) into scores that can be computed locally 
+in each search step, then summed to obtain the global score. 
+For example, a Markov assumption in the model---i.e., 
+bounding the window over parts of the output that any given feature can look at---can 
+lead to an exact dynamic programming search algorithm.
+Where incorporating \textbf{nonlocal features} into a model is deemed valuable, 
+approximate search techniques such as stacking \citep{cohen-05,krishnan-06,martins-08}, 
+reranking \citep{collins-05,koo-05,toutanova-05,huang-08}, sampling \citep{finkel-05}, 
+loopy belief propagation \citep{sutton-04,smith-08},
+and integer linear programming \citep{roth-05,martins-09} can be used\nss{are these good citations? also: cube summing? \citep{gimpel-09}}.
+
+The semi-supervised framework of \textbf{posterior regularization} \citep{ganchev-10} 
+allows declarative assumptions about good analyses (e.g., in part-of-speech tagging, ``every sentence should contain at least one verb'') 
+to be encoded as expectation constraints in a regularizer that uses unlabeled data.
+In this framework, the model features are supplemented with special features for the constraints.
+Both kinds of features are required to factor locally for tractability of inference.
+
+
+\paragraph{Model families.} 
 Certain families of structured models can be understood as generalizing certain unstructured classifiers.
 Especially important in NLP are Markov models for \textbf{sequences}. 
 Here are some correspondences between unstructured and sequence models:
@@ -1252,22 +1305,17 @@ conditional, non-probabilistic & linear classifiers trained with a max-margin lo
 Not all sequence modeling frameworks fit neatly in the above table: e.g., some model families combine 
 generative and conditional components \citep{berg-kirkpatrick-10,ammar-14}.
 There are also, of course, approaches to predicting other kinds of structures, 
-such as trees \citep[in syntactic parsing: e.g.,][]{mcdonald-05} 
+such as trees \citep[in syntactic parsing: e.g.,][]{charniak-05,mcdonald-05} 
 and graphs \citep[in semantic parsing: e.g.,][]{flanigan-14}.
 
-The semi-supervised framework of \textbf{posterior regularization} \citep{ganchev-10} 
-allows declarative assumptions about good analyses (e.g., in part-of-speech tagging, ``every sentence should contain at least one verb'') 
-to be encoded as expectation constraints in a regularizer that uses unlabeled data.
-In this framework, the model features are supplemented with special features for the constraints.
-Both kinds of features are required to factor locally for tractability of inference.
 
 
 %\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
 %approximate inference; hard constraints/ILPs/dual decomp; combining generative and discriminative (Berg-Kirkpatrick)}
 
-\subsection{Multitask learning and domain adaptation}
+%\subsection{Multitask learning and domain adaptation}
 
-\nss{interesting things with features: frustratingly easy, Ando \& Zhang, \ldots}
+%\nss{interesting things with features: frustratingly easy, Ando \& Zhang, \ldots}
 
 % \subsection{Unsupervised and semisupervised learning}
 % 
