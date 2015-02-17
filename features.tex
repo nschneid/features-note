@@ -414,9 +414,10 @@ g_{\boldsymbol{\theta}}(x,y) = \log\frac{\exp{\sum_{j=1}^d \theta_j f_j(x,y)}}{\
 
 Observe that the feature function $\mathbf{f}(x,y)$ depends on both the input and the label.
 It is often useful to distinguish a {\bf percept}\footnote{This is a nonstandard term; we are introducing 
-it because the term ``feature'' is overloaded, sometimes referring to the raw characteristic of the input (what we mean by ``percept''),
-and other times to the variable associated with a parameter, 
-which depends on both the input and the output.\nss{manning \& schuetze p. 591 mentions this terminology issue}} function, 
+it because the term ``feature'' is overloaded \citep[p.~591]{manning-99}. 
+In the literature, ``feature'' sometimes refers to the raw characteristic of the input (what we mean by ``percept''),
+and in other cases refers to the variable associated with a parameter, 
+which depends on both the input and the output.} function, 
 $\boldsymbol{\phi}(x)$---a percept being a characteristic of the input only.
 
 Most commonly, there is one parameter for every pairing of percept with a label.\footnote{We assume 
@@ -461,8 +462,7 @@ the classification rule is
 \end{equation} 
 A {\bf log-linear}, or {\bf max(imum) ent(ropy)}, model is more general---it implies the log-linear scoring function 
 but does not depend on the space of outputs being fixed or require the cross-product parametrization.
-
-\nss{is it necessary to discuss generative/discriminative/joint/conditional?}
+%\nss{is it necessary to discuss generative/discriminative/joint/conditional?}
 \\
 
 \noindent To summarize: in our terminology,
@@ -573,7 +573,7 @@ Feature induction (\cref{sec:selection}) seeks to discover conjunctions or disju
 existing features/percepts that improve the discriminating power of the model.
 
 
-\subsection{Richer features\nss{better name?}}\label{sec:richer}
+\subsection{Richer features}\label{sec:richer}
 
 Thus far, we have assumed that features link input characteristics (percepts) 
 to a single label. But in general, a feature may be any real-valued function of the input and label.
@@ -596,8 +596,6 @@ These are mathematically straightforward, but the sophisticated relationship bet
 is unusual and not anticipated by many implementations.
 
 \subsection{Other topics?}
-
-\nss{local vs.~nonlocal in structured models}
 
 \nss{softmax trick?}
 
@@ -954,7 +952,10 @@ i.e., the sum of values for this feature over all seen instances;
 it is constant given the labeled training data. The second term consists of \textbf{expected feature counts} 
 under the model, i.e., what the feature counts would be if the model were allowed to (softly) predict the labels 
 for training examples using the current parameters. The objective of fitting the data, then, 
-can be understood as adjusting the parameters so that the expected feature counts match the empirical feature counts.\footnote{\nss{refer to \citep{smith} for maxent interpretation}}
+can be understood as adjusting the parameters so that the expected feature counts match the empirical feature counts.\footnote{Log-linear 
+models are also known as \textbf{maximum entropy} (MaxEnt) models 
+because their training can be interpreted as maximizing entropy 
+subject to fitting the data \citep[pp.~199--202]{smith}.}
 
 If the goal is to predict the single best label, the \textbf{max-margin loss} is a popular alternative:\footnote{The \textbf{cost function} assigns a nonnegative penalty to erroneous predictions during learning.
 \nss{relationship to margin?} 
@@ -1212,7 +1213,7 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 
 \nss{standardization (divide real-valued features by variance?)}
 
-\section{Advanced topics}
+\section{Beyond simple classification: leveraging structure}
 
 % \nss{learning low-dimensional representations}
 % 
@@ -1253,8 +1254,11 @@ which consists of a simple enrichment of the feature space:
 
 \nss{group lasso, etc. Is L2 regularization ever done on groups?}
 
+\subsection{Structure in the label (type) space}
 
-\subsection{Structure in the output space (structured prediction)}
+\nss{hierarchical classification; attributes in COLING definiteness paper. features, cost function, regularization}
+
+\subsection{Structure in the output space: jointly predicting multiple output variables (structured prediction)}
 
 This document has focused on models for unstructured classification, 
 but many of the ideas apply just as well in the case of \textbf{structured prediction}, 
