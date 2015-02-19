@@ -592,7 +592,7 @@ Here are two examples:
 \item \textbf{Features making sophisticated use of labels.} 
 When there is a known grouping or hierarchy of labels, a feature may combine a percept 
 with a disjunction of related labels. This might help the model to learn better generalizations, 
-especially if some labels are much rarer than others.
+especially if some labels are much rarer than others. See \cref{sec:lblstruct}.
 
 \item \textbf{Features making sophisticated use of the input-and-label combination.}
 Consider a preposition correction model, where the input is a preposition in context 
@@ -1230,7 +1230,7 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 % 
 % \nss{kernels; greedy search--based classifiers like decision trees?; \ldots}
 
-\subsection{Structure in the sample distribution: domain adaptation}
+\subsection{Structure in the sample distribution: domain adaptation}\label{sec:da}
 
 Standard supervised learning techniques for models such as the ones introduced above 
 assume that the model will be asked to make predictions on test examples 
@@ -1245,7 +1245,7 @@ frequently faces this problem when attempting to make predictions about
 language in genres for which few annotations are available. 
 \textbf{Domain adaptation} (DA) techniques have been developed to help models adjust  
 to data unlike (most of) the data points seen at training time.
-A typical paradigm is that the (semi-)supervised learner knows about two domains---a 
+A typical paradigm is that the \mbox{(semi-)}supervised learner knows about two domains---a 
 \textbf{source domain} (e.g., news text) in which annotated instances are abundant, and 
 a \textbf{target domain} (e.g., social media text) with no more than a small number of annotated instances. 
 The model is then tested on held-out examples from the target domain. 
@@ -1267,20 +1267,27 @@ Then supervised learning over the full training set (covering multiple domains)
 gives parameters $\boldsymbol{\theta}$, where $|\boldsymbol{\theta}| = |\mathbf{f}|$.
 The intuition is that the domain-agnostic features share statistical strength 
 across domains---allowing generalization from resource-rich to resource-sparse domains---but
-any nonzero domain-specific features will help ``customize'' the prediction for the domain.\footnote{\Citet{daume-07} 
+any domain-specific features for which there is evidence in training 
+will help ``customize'' the prediction for the domain.\footnote{\label{fn:da-reg}%
+\Citet{daume-07} 
 further shows that this use of both domain-general and domain-specific features 
 is quite similar to learning separate sets of domain-specific parameters 
 with a regularizer that encourages similar weights for the corresponding features in different domains.}
-This simple technique often works well, the only caveat being that greatly expanding the number of parameters 
-means that regularization (\cref{sec:reg}) becomes more important to avoid overfitting.
+This simple technique often works well, the only caveat being that the potentially large number of parameters 
+means that regularization (\cref{sec:reg}) is especially important to avoid overfitting.
 
-\subsection{Structure in the parameter space: structured sparsity}
+\subsection{Structure in the label (type) space}\label{sec:lblstruct}
 
-\nss{group lasso, etc. Is L2 regularization ever done on groups?}
-
-\subsection{Structure in the label (type) space}
-
-\nss{hierarchical classification; attributes in COLING definiteness paper. features, cost function, regularization}
+In \cref{sec:da} we saw that features can be duplicated to simultaneously capture 
+domain-specific trends and statistical generalizations across domains. 
+The same idea can be applied in a multiclass classification setting 
+to model generalizations over groups of \emph{labels} (especially when some of the labels are individually sparse). 
+If labels are defined in a hierarchy---e.g., a taxonomy of categories is known---features 
+can be added to capture subtrees (i.e., the same parameter applies to all labels in 
+a subtree: see \cref{sec:richer}) as well as individual labels.\footnote{By analogy to frustratingly easy domain adaptation 
+(\fnref{fn:da-reg}), feature augmentation can be viewed as an alternative to \nss{cite: gopal}'s hierarchical label regularization.\nss{Sam, is there a paper showing this?}}
+Other forms of structure in the label space can be expressed through features, 
+such as when labels are encoded as attribute--value matrices \citep{bhatia-14}.
 
 \subsection{Structure in the output space: jointly predicting multiple output variables (structured prediction)}
 
@@ -1336,6 +1343,14 @@ There are also, of course, approaches to predicting other kinds of structures,
 such as trees \citep[in syntactic parsing: e.g.,][]{charniak-05,mcdonald-05} 
 and graphs \citep[in semantic parsing: e.g.,][]{flanigan-14}.
 
+\subsection{Structure in the parameter space: structured sparsity}
+
+Finally, we note in passing that regularization (\cref{sec:reg}) does not need to treat all parameters uniformly. 
+One topic of active research is \textbf{structured sparsity}, 
+in which regularizers are designed with relationships among features in mind: 
+the \textbf{group Lasso}, for example, has access to subsets (\textbf{groups}) of features 
+that are expected to correlate, and encourages their weights to go to zero collectively rather than independently.
+\nss{intuition? citations: Andre, Dani, \ldots}
 
 
 %\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
