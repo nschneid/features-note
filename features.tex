@@ -1267,7 +1267,10 @@ Then supervised learning over the full training set (covering multiple domains)
 gives parameters $\boldsymbol{\theta}$, where $|\boldsymbol{\theta}| = |\mathbf{f}|$.
 The intuition is that the domain-agnostic features share statistical strength 
 across domains---allowing generalization from resource-rich to resource-sparse domains---but
-any nonzero domain-specific features will help ``customize'' the prediction for the domain.
+any nonzero domain-specific features will help ``customize'' the prediction for the domain.\footnote{\Citet{daume-07} 
+further shows that this use of both domain-general and domain-specific features 
+is quite similar to learning separate sets of domain-specific parameters 
+with a regularizer that encourages similar weights for the corresponding features in different domains.}
 This simple technique often works well, the only caveat being that greatly expanding the number of parameters 
 means that regularization (\cref{sec:reg}) becomes more important to avoid overfitting.
 
