@@ -553,6 +553,11 @@ and for POS tags (e.g., \textsc{Adjective})---call these \textbf{atomic} percept
 \textbf{conjoined} to form word-and-tag percepts (e.g., a percept that fires if and only if the input contains 
 the word \textit{nice} tagged as an \textsc{Adjective}; or another that fires where the input contains 
 the word \textit{nice} following an \textsc{Adverb}; and so forth).
+Formally: if $\phi_3(x)$ is defined to be the logical AND of two binary percepts, $\phi_1(x) \wedge \phi_2(x)$,
+then we say $\phi_3$ is the conjunction of $\phi_1$ and $\phi_2$. 
+We also define notation for a vector of conjunctions: $\phi'(x)\ \&\  \boldsymbol{\phi}(x)$ means the vector of conjunctions
+between $\phi'(x)$ and every element of $\boldsymbol{\phi}(x)$. 
+
 These \textbf{complex} percepts can be more informative than the atomic percepts, 
 perhaps because they are less ambiguous (\textit{nice} as adjective vs.~name of a city in France).
 But conjoined percepts tend to be more sparse (less frequent in data), and thus their parameters might be harder to learn, 
@@ -563,11 +568,15 @@ Another kind of complex percept that may be used is a \textbf{disjunction}: it i
 {\em any} of its disjuncts are active. For example, if a word is known to have spelling variants, 
 like \textit{favor} and \textit{favour}, a feature that abstracts away from the spelling 
 may make the model more robust to different input sources (say, American vs.~British).
+This is represented as $\phi_3(x) = \phi_1(x) \vee \phi_2(x)$---and 
+analogously to conjunctions, we let $\phi'(x)\ |\ \boldsymbol{\phi}(x)$ denote a vector of disjunctions.
 Disjunctions can be interpreted as \textbf{parameter tying}---i.e., instead of separate parameters 
 to be learned for \textit{favor} and \textit{favour}, these are ``tied'' together.
 \nss{anything else to be said about parameter tying? do some people call it ``sharing''?}
 
-Mathematically, complex percepts are treated just like atomic percepts, 
+Conjunctions and disjunctions can also be represented at the level of features 
+rather than percepts.
+Mathematically, complex features/percepts are treated just like atomic features/percepts, 
 but the distinction can be exploited in implementation.
 Feature induction (\cref{sec:selection}) seeks to discover conjunctions or disjunctions of 
 existing features/percepts that improve the discriminating power of the model.
@@ -1246,9 +1255,21 @@ in the target domain \citep{sogaard-13}; others are intended for situations with
 target-domain instances. A notable member of the second category 
 is the ``frustratingly easy'' method of \citet{daume-07}, 
 which consists of a simple enrichment of the feature space:
-
-
-\nss{frustratingly easy}
+supposing we have defined a domain-agnostic feature function $\tilde{\mathbf{f}}(x,y)$, 
+define an additional percept $\delta(x)$ to indicate the domain of the input $x$.
+Then let $\mathbf{f}(x,y) = \tilde{\mathbf{f}}(x,y) \oplus (\delta(x)\ \&\ \tilde{\mathbf{f}}(x,y))$ 
+(where $\oplus$ denotes vector concatenation, and $\&$ denotes conjunction as in \cref{sec:complex}).
+I.e., the augmented feature function $\mathbf{f}$ 
+consists of the original features from $\tilde{\mathbf{f}}$, along with domain-specific copies 
+of each of them.\footnote{In practice, it is sufficient to designate a ``background domain'' 
+for which only the original features fire, for the same reason as background labels (\cref{sec:bg}).} 
+Then supervised learning over the full training set (covering multiple domains) 
+gives parameters $\boldsymbol{\theta}$, where $|\boldsymbol{\theta}| = |\mathbf{f}|$.
+The intuition is that the domain-agnostic features share statistical strength 
+across domains---allowing generalization from resource-rich to resource-sparse domains---but
+any nonzero domain-specific features will help ``customize'' the prediction for the domain.
+This simple technique often works well, the only caveat being that greatly expanding the number of parameters 
+means that regularization (\cref{sec:reg}) becomes more important to avoid overfitting.
 
 \subsection{Structure in the parameter space: structured sparsity}
 
@@ -1275,10 +1296,10 @@ For example, a Markov assumption in the model---i.e.,
 bounding the window over parts of the output that any given feature can look at---can 
 lead to an exact dynamic programming search algorithm.
 Where incorporating \textbf{nonlocal features} into a model is deemed valuable, 
-approximate search techniques such as stacking \citep{cohen-05,krishnan-06,martins-08}, 
-reranking \citep{collins-05,koo-05,toutanova-05,huang-08}, sampling \citep{finkel-05}, 
-loopy belief propagation \citep{sutton-04,smith-08},
-and integer linear programming \citep{roth-05,martins-09} can be used\nss{are these good citations? also: cube summing? \citep{gimpel-09}}.
+approximate search techniques such as \textbf{stacking} \citep{cohen-05,krishnan-06,martins-08}, 
+\textbf{reranking} \citep{collins-05,koo-05,toutanova-05,huang-08}, \textbf{sampling} \citep{finkel-05}, 
+\textbf{loopy belief propagation} \citep{sutton-04,smith-08},
+and \textbf{integer linear programming} \citep{roth-05,martins-09} can be used\nss{are these good citations? also: cube summing? \citep{gimpel-09}}.
 
 The semi-supervised framework of \textbf{posterior regularization} \citep{ganchev-10} 
 allows declarative assumptions about good analyses (e.g., in part-of-speech tagging, ``every sentence should contain at least one verb'') 
