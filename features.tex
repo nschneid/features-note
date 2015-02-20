@@ -294,6 +294,7 @@
 \newcommand{\srsversion}[1]{}
 %\newcommand{\finalversion}[1]{#1}
 \newcommand{\finalversion}[1]{}
+\newcommand{\futureversion}[1]{}
 \newcommand{\shortversion}[1]{#1}
 \newcommand{\considercutting}[1]{#1}
 \newcommand{\longversion}[1]{} % ...if only there were more space...
@@ -329,23 +330,40 @@
 This note discusses concepts, terminology, algorithms, and implementation details pertaining to features in discrete statistical models.
 \end{abstract}
 
+Contemporary approaches to many problems in natural language processing (NLP)
+involve statistical learning of patterns from data. 
+Many models formalize the learning problem as classification---predicting an output label $y$ 
+given an input $x$---and where $x$ is a complex object, such as a text document,
+the model designer specifies \textbf{features} that may be indicative of the relationship between 
+particular $x$ and $y$ pairs. The main use of data is to learn which features are most effective 
+at capturing the relationship between input cues and output labels.
+
+This document is intended for readers who are familiar with the fundamentals of 
+machine learning classification.\nss{cite intro texts?} 
+It examines, through the lens of features, aspects of
+the mathematical formulation and practical implementation of classifiers for text.
+
 We begin in {\bf \fullref{sec:prelim}} with a mathematical overview of the sorts of models 
 that will be considered here.
 New terminology (especially: \textbf{percept} and \textbf{cross-product parametrization})
 and notation are explained.
 
-\nss{we do not address conceptual design/selection of features, or techniques for helping automate 
-the choice of features using the model's training data and/or auxiliary data 
-(dimensionality reduction, feature selection, structured sparsity, multitask learning).}
-The next two sections address {\em feature design}.
+The next two sections address task-independent\footnote{We do not address the conceptual process for identifying 
+possible features, which can be done manually (specific to the task, data, and preprocessing tools) 
+and/or with data-driven dimensionality reduction techniques.\nss{cites?}} aspects of {\em feature design}.
 {\bf \fullref{sec:param}} elaborates on several mathematical issues of parametrization, 
 such as the treatment of features over categorical inputs.
 {\bf \fullref{sec:extraction}} offers an applied perspective on the development of feature functions---typically, 
 this combines description of abstract templates with data-driven generation and selection of specific features.
 
 Given a feature function, {\bf \fullref{sec:learning}} concerns {\em weight learning}, 
-focusing on supervised training. {\bf \fullref{sec:interp}} discusses the insights that can be gained 
-from examining learned model weights. 
+focusing on supervised training.\futureversion{\nss{{\bf \fullref{sec:interp}} discusses the insights that can be gained 
+from examining learned model weights.}}
+Finally, {\bf \fullref{sec:structure}} gives a flavor of more sophisticated approaches 
+for modeling structure in sample distribution (domains), 
+the output space, the label space, and the parameter space. 
+
+\nss{what about kernels?}
 
 To make the ideas in this document more concrete, 
 a Python reference implementation of feature extraction and weight learning
@@ -517,7 +535,7 @@ g_\params(x,y) & \text{o.w.}\end{array}\right\}
 With the log-linear scoring function, it is the dot product between the parameters and the features that is 0 for the background label.
 
 In practice, keeping parameters for all $Y$ labels (not making one of them a background label) 
-should not affect predictive performance, and may make the model more interpretable (\cref{sec:interp}).
+should not affect predictive performance, and may make the model more interpretable\futureversion{\nss{(\cref{sec:interp})}}.
 But designating a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
 
 \subsection{Categorical characteristics}
@@ -1078,10 +1096,10 @@ we can exploit numerical optimization techniques for learning a set of parameter
 Here we give a synopsis of a simple online learning algorithm that is widely used in NLP, 
 and discuss practical considerations required for making it fast.
 
-\nss{practical issues (e.g., fast score computation, sparse updates/averaging)}
+%\nss{practical issues (e.g., fast score computation, sparse updates/averaging)}
 % (kinds of optimization: online vs. (mini)batch; gradient-based; margin-based vs. probabilistic; curriculum; joint/constrained/dual decomp)
 
-\nss{unsupported features/count thresholds; OOV handling}
+%\nss{unsupported features/count thresholds; OOV handling}
 
 \subsubsection{Online optimization: SGD}\label{sec:online}
 
@@ -1214,15 +1232,17 @@ giving us the equivalent of \cref{eq:averaging}, but with only one dense operati
 
 
 
-\section{Interpretation}\label{sec:interp}
+\futureversion{\section{Interpretation}\label{sec:interp}
 
 \nss{caveats about interpretability}
 
+\nss{statistical tests for social scientists}
+
 \nss{impact measure}
 
-\nss{standardization (divide real-valued features by variance?)}
+\nss{standardization (divide real-valued features by variance?)}}
 
-\section{Beyond simple classification: leveraging structure}
+\section{Beyond simple classification: leveraging structure}\label{sec:structure}
 
 % \nss{learning low-dimensional representations}
 % 
@@ -1284,8 +1304,8 @@ The same idea can be applied in a multiclass classification setting
 to model generalizations over groups of \emph{labels} (especially when some of the labels are individually sparse). 
 If labels are defined in a hierarchy---e.g., a taxonomy of categories is known---features 
 can be added to capture subtrees (i.e., the same parameter applies to all labels in 
-a subtree: see \cref{sec:richer}) as well as individual labels.\footnote{By analogy to frustratingly easy domain adaptation 
-(\fnref{fn:da-reg}), feature augmentation can be viewed as an alternative to \nss{cite: gopal}'s hierarchical label regularization.\nss{Sam, is there a paper showing this?}}
+a subtree: see \cref{sec:richer}) as well as individual labels.\footnote{By analogy to domain regularization vs.~frustratingly easy domain adaptation
+(\fnref{fn:da-reg}), feature augmentation can be viewed as an alternative to \nss{cite: gopal}'s tree regularizer for labels.\nss{Sam, is there a paper showing this?}}
 Other forms of structure in the label space can be expressed through features, 
 such as when labels are encoded as attribute--value matrices \citep{bhatia-14}.
 
