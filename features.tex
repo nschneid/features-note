@@ -335,7 +335,10 @@ involve statistical learning of patterns from data.
 Many models formalize the learning problem as classification---predicting an output label $y$ 
 given an input $x$---and where $x$ is a complex object, such as a text document,
 the model designer specifies \textbf{features} that may be indicative of the relationship between 
-particular $x$ and $y$ pairs. The main use of data is to learn which features are most effective 
+particular $x$ and $y$ pairs. 
+Because the vocabulary of any natural language is large, and most NLP models have features that involve words, 
+typical NLP models are high-dimensional, with thousands or millions of features.
+The main use of data is to learn which of these features are most effective 
 at capturing the relationship between input cues and output labels.
 
 This document is intended for readers who are familiar with the fundamentals of 
@@ -727,12 +730,13 @@ For example, \citet{hall-14} hash only unsupported features, retaining the full 
 are worth including in a model, given resource limitations---%
 e.g., avoiding features that do not improve accuracy, or 
 adhering to a budget measured in terms of features or feature extraction time.
-A cutoff, as described above, is a simple but crude approach to feature selection based on training data counts.
+A cutoff, as described above, is a simple but crude approach to feature selection based on training data counts.\footnote{More generally, 
+heuristic filters are one class of feature selection method \citep[slide~13]{martins-tutorial}.}
 Regularization (\cref{sec:reg}) techniques such as the $L_1$ penalty 
 remove some features (by forcing their weights to zero in training), 
 and thus can be viewed as selecting the remaining features.
 Feature selection can also be achieved by 
-removing or adding features based on how they affect the model's accuracy on held-out data;
+removing or adding features based on how they affect the model's accuracy on held-out data \citep[``wrapper methods'';][slides~16--17]{martins-tutorial};
 in particular, \textbf{feature induction} algorithms augment an initial model 
 by selecting feature conjunctions and disjunctions (\cref{sec:complex}) where beneficial \citep{della_pietra-97,mccallum-03}.
 For more on feature selection algorithms in NLP, see \citet{collins-05} and citations therein.\footnote{Sophisticated 
@@ -1068,7 +1072,7 @@ are effectively performing feature selection (\cref{sec:selection}).
 
 \subsection{Sparsity}\label{sec:sparsity}
 
-When talking about feature-rich models, the word \textbf{sparse} can mean one of three things:
+When talking about feature-rich models, the word \textbf{sparse} has several meanings:\footnote{See also \citet[slide~7]{martins-tutorial}.}
 \begin{itemize}
   \item \textbf{data sparseness}: Characterizing a dataset as ``sparse'' is a fancy way of saying there is not as much of it as we would like 
   given the complexity of what we are trying to learn.
@@ -1076,7 +1080,7 @@ When talking about feature-rich models, the word \textbf{sparse} can mean one of
   Formally, some vector $\mathbf{v}$ is said to be sparse if $||\mathbf{v}||_0 \ll |\mathbf{v}|$.\footnote{$||\mathbf{v}||_0$, the $\ell_0$-norm, counts the number of nonzero components of $\mathbf{v}$.} 
   This can manifest itself in two ways in our models:
   \begin{itemize}
-  	\item \textbf{weight sparsity}: When learning weights for a large number of parameters, it may be desirable to encourage
+  	\item \textbf{model sparsity}: When learning weights for a large number of parameters, it may be desirable to encourage
   many or most of them to be zero on the hypothesis that a relatively small number of parameters are actually 
   relevant to the task. 
   $L_1$ regularization (\cref{sec:reg}) is one technique for biasing the learner in favor of models where 
@@ -1116,7 +1120,7 @@ $\boldsymbol{\alpha}$ is the \textbf{learning rate} or \textbf{step size}---it w
 from the current instance against the cumulative evidence from past timesteps.
 The learning rate may be a constant scalar hyperparameter (e.g., $1$ or $.9$), may be scheduled to decrease over time, 
 or may be chosen adaptively using the gradient.\footnote{\label{fn:adaptive}Adaptive techniques include DCA \citep{martins-10} 
-and AdaGrad \citep{adagrad}; see also \url{http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf}.
+and AdaGrad \citep{adagrad}; see also \url{http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf}.\nss{adadelta?}
 With DCA, $\boldsymbol{\alpha}^{(t)}$ is a scalar; with AdaGrad it is a vector (i.e., each parameter has its own learning rate).}
 The parameters are typically initialized to 0: $\boldsymbol{\theta}^{(0)} \leftarrow \mathbf{0}$.
 
@@ -1126,6 +1130,9 @@ before making each update to the model weights.
 L-BFGS \citep{lbfgs} is a popular batch optimizer for which there are open source implementations.
 \textbf{Mini-batch} optimization is a middle ground in which several training instances 
 are used for each update \citep[p.~175]{smith}.
+
+\Citet{bottou-12} gives a detailed introduction to SGD, 
+including practical implementation advice.\footnote{\url{http://leon.bottou.org/publications/pdf/tricks-2012.pdf}}
 
 \subsubsection{Implementing learning}\label{sec:impllearning}
 
@@ -1366,11 +1373,11 @@ and graphs \citep[in semantic parsing: e.g.,][]{flanigan-14}.
 \subsection{Structure in the parameter space: structured sparsity}
 
 Finally, we note in passing that regularization (\cref{sec:reg}) does not need to treat all parameters uniformly. 
-One topic of active research is \textbf{structured sparsity}, 
+One topic of active research is \textbf{structured sparsity} \citep{martins-tutorial}, 
 in which regularizers are designed with relationships among features in mind: 
 the \textbf{group Lasso}, for example, has access to subsets (\textbf{groups}) of features 
-that are expected to correlate, and encourages their weights to go to zero collectively rather than independently.
-\nss{intuition? citations: Andre, Dani, \ldots}
+that are expected to correlate, and encourages their weights to go to zero collectively rather than independently \citep{meier-08}.
+\nss{intuition?}
 
 
 %\nss{feature locality/factorization for dynamic programming; also cost function needs to factorize; 
