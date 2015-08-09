@@ -537,9 +537,14 @@ g_\params(x,y) & \text{o.w.}\end{array}\right\}
 \end{equation}
 With the log-linear scoring function, it is the dot product between the parameters and the features that is 0 for the background label.
 
-In practice, keeping parameters for all $Y$ labels (not making one of them a background label) 
-should not affect predictive performance, and may make the model more interpretable\futureversion{\nss{(\cref{sec:interp})}}.
-But designating a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
+This change to the parametrization may have minor consequences when used with regularization (\cref{sec:reg}): 
+if the regularizer treats all parameters equally, then there may be more regularization pressure under the original 
+parametrization (because it has more parameters). The two parametrizations are therefore not strictly equivalent 
+in the presence of regularization.
+In practice, though, there should be little difference in predictive performance. 
+Keeping parameters for all $Y$ labels (not making one of them a background label) 
+may make the model more interpretable\futureversion{\nss{(\cref{sec:interp})}},
+while designating a background label gives savings in memory (smaller parameter vector) and runtime (one less class to score for each input).
 
 \subsection{Categorical characteristics}
 
