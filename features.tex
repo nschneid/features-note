@@ -218,6 +218,9 @@
 \newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu} % \bar is too narrow in math
 \newcommand{\cost}{c}
 
+\newcommand{\citeposs}[2][]{\citeauthor{#2}'s (\citeyear[#1]{#2})}
+\newcommand{\Citeposs}[2][]{\Citeauthor{#2}'s (\citeyear[#1]{#2})}
+
 \usepackage{nameref}
 \usepackage{cleveref}
 
@@ -1125,8 +1128,9 @@ $\boldsymbol{\alpha}$ is the \textbf{learning rate} or \textbf{step size}---it w
 from the current instance against the cumulative evidence from past timesteps.
 The learning rate may be a constant scalar hyperparameter (e.g., $1$ or $.9$), may be scheduled to decrease over time, 
 or may be chosen adaptively using the gradient.\footnote{\label{fn:adaptive}Adaptive techniques include DCA \citep{martins-10} 
-and AdaGrad \citep{adagrad}; see also \url{http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf}.\nss{adadelta?}
-With DCA, $\boldsymbol{\alpha}^{(t)}$ is a scalar; with AdaGrad it is a vector (i.e., each parameter has its own learning rate).}
+and AdaGrad \citep{adagrad}.\nss{adadelta?}
+With DCA, $\boldsymbol{\alpha}^{(t)}$ is a scalar; with AdaGrad it is a vector (i.e., each parameter has its own learning rate).
+For AdaGrad, see \citeposs{kummerfeld-15} advice on implementation, including sparse updates.}
 The parameters are typically initialized to 0: $\boldsymbol{\theta}^{(0)} \leftarrow \mathbf{0}$.
 
 Alternatives for optimizing the learning objective include 
