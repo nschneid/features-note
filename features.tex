@@ -419,7 +419,7 @@ Our feature function, $\mathbf{f}(x,y)$, is a vector-valued mapping between
 characteristics of the input and characteristics of the output.
 We assume that $\mathbf{f}(x,y)$ returns a real vector with $d$ components.
 
-The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}(x,y)$ weighted by corresponding {\bf parameters}.
+The scoring function can then depend on the sum of the components of the vector returned by $\mathbf{f}(x,y)$ weighted by corresponding {\bf parameters}, a.k.a.~{\bf weights}.
 %\footnote{The parameters in a model are sometimes called its {\bf coefficients} or {\bf weights}. 
 %We reserve the term ``weight'' for the value and ``parameter'' for the variable.}
 The (real) parameters weight the features to establish the goodness-of-fit between pairs of input-output characteristics.  
@@ -430,7 +430,7 @@ g_{\boldsymbol{\theta}}(x,y) = \sum_{j=1}^d \theta_j f_j(x,y)
 = \boldsymbol{\theta}^{\top} \mathbf{f}(x,y)
 \end{equation}
 And here is a {\bf log-linear} scoring function, which composes the linear scoring function within the 
-{\bf softmax} function (to scale it between 0 and 1), which is in turn composed within a logarithm:\footnote{The denominator (sum over all labels) is called the {\bf partition function}, sometimes denoted $Z_{\boldsymbol{\theta}}(x)$. It normalizes the scores to be a probability distribution (nonnegative and summing to 1).}
+{\bf softmax} function (to scale it between 0 and 1), which is in turn composed within a logarithm:\footnote{\label{fn:partition}The denominator (sum over all labels) is called the {\bf partition function}, sometimes denoted $Z_{\boldsymbol{\theta}}(x)$. It normalizes the scores to be a probability distribution (nonnegative and summing to 1).}
 \begin{equation}\label{eq:softmax}
 g_{\boldsymbol{\theta}}(x,y) = \log\frac{\exp{\sum_{j=1}^d \theta_j f_j(x,y)}}{\sum_{y'\in\mathcal{Y}}\exp{\sum_{j=1}^d \theta_j f_j(x,y')}}
 = \boldsymbol{\theta}^{\top} \mathbf{f}(x,y) - \log{\sum_{y'\in\mathcal{Y}}\exp{\boldsymbol{\theta}^{\top} \mathbf{f}(x,y')}}
@@ -471,19 +471,26 @@ a document with the word \textit{pie} as best matching the {\sc recipe} label, b
 ``{\sc recipe} contains the word \textit{pie}'' will have a higher weight than the other \textit{pie} features.
 The model might include other percepts---other words, bigrams (``contains the bigram \textit{apple pie}''), 
 metadata (``author = Martha Stewart''), or any other characteristics of the document deemed relevant to the task.
-The cross-product parametrization implies that a feature is instantiated for every percept paired with every label.
+The cross-product parametrization implies that a feature is instantiated for every percept paired with every label:
+i.e., each percept--label pair gets its own weight.
 
 
 Now we can define {\bf multinomial (or multiclass) logistic regression} model 
 as a model over a fixed set of categorical outputs with the log-linear scoring function and the cross-product parametrization.
-To simplify notation, we will let $\boldsymbol{\theta}^y$ denote the one of the $Y$ sections of $\boldsymbol{\theta}$ 
+To simplify notation, we will let $\boldsymbol{\theta}^y$ denote the section of $\boldsymbol{\theta}$ 
 corresponding to the label $y$. 
 %so $\left(\mathbf{g}_{\boldsymbol{\theta}}(x,y)\right)_j = \boldsymbol{\theta}^y_j \phi_j(x) = \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x)$.
-Then, combining equations \cref{eq:classifier,eq:softmax,eq:crossprod}, 
+Then, combining \cref{eq:classifier,eq:softmax,eq:crossprod}, 
 the classification rule is
-\begin{equation}\label{eq:logistic}
-\hat{y} = \max_{y\in\mathcal{Y}} g_\params(x,y) = \max_{y\in\mathcal{Y}} \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x) - \log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^{y'\top} \boldsymbol{\phi}(x)}}}
-\end{equation} 
+\begin{align}\label{eq:logistic}
+\hat{y} = \argmax_{y\in\mathcal{Y}} g_\params(x,y) &= \argmax_{y\in\mathcal{Y}} \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x) - \log{\sum_{y'\in\mathcal{Y}}{\exp{\boldsymbol{\theta}^{y'\top} \boldsymbol{\phi}(x)}}} \\
+&= \argmax_{y\in\mathcal{Y}} \boldsymbol{\theta}^{y\top} \boldsymbol{\phi}(x)
+\end{align} 
+The second term (partition function: see \fnref{fn:partition}) sums over all labels 
+to ensure the scores are normalized. 
+Because it is constant with respect the label being scored, it can be ignored 
+when taking the argmax.
+
 A {\bf log-linear}, or {\bf max(imum) ent(ropy)}, model is more general---it implies the log-linear scoring function 
 but does not depend on the space of outputs being fixed or require the cross-product parametrization.
 %\nss{is it necessary to discuss generative/discriminative/joint/conditional?}
@@ -568,6 +575,7 @@ can be left out of the feature vector (\cref{sec:bg})---with slight computationa
 \subsection{Scalar characteristics}
 
 \nss{binning and thresholding for integer- or real-valued features}
+\nss{jhclark's paper}\nss{jono: This was particularly important in Mohit's work with Norma counts from web1t}
 
 \subsection{Scalar labels}
 
@@ -713,7 +721,7 @@ during each iteration of learning, consider caching each instance's percepts\sla
 %\paragraph{Unsupported percepts and features.}
 Many percepts and features, especially instantiations of open-ended templates, will never be active in the training data. 
 These are said to be \textbf{unsupported}.
-Note that no unsupported {\em percept} will receive nonzero parameter weights during learning, 
+Note that an unsupported {\em percept} will never receive a (nonzero) weight during learning, 
 so only percepts attested in the training data (found during instantiation) 
 need to be included in the feature function (and accessed during recognition).\footnote{In the framework of \mbox{(log-)linear} 
 models addressed here, the only exception can be if a special regularizer is used that might push weights for unsupported percepts away from 0. 
